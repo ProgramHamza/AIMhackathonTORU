@@ -13,18 +13,20 @@ from app.segmenter import Document, clean_text, segment_document
 from app.tree import DecisionTree, normalize
 
 LETTER_2015 = ("Frau<BR>Testpatientin<BR>PLZ Ort<BR><BR>Diagnosen:<BR>Arterielle Hypertonie<BR>"
-               "Vorhofflimmern<BR><BR>Allergien:<BR>Penicillin-Allergie (Exanthem)<BR><BR>"
+               "Vorhofflimmern<BR>Gonarthrose rechts<BR>Z.n. Tonsillektomie 10/2015<BR>"
+               "Z.n. Appendektomie 03/2001<BR><BR>Allergien:<BR>Penicillin-Allergie (Exanthem)<BR><BR>"
                "Befunde:<BR>Gewicht: 80 kg<BR>Kein Perikarderguss.<BR><BR>"
                "Therapie und Verlauf:<BR>Die Patientin wurde mit Schwindel aufgenommen. Die Ursache war eine<BR>"
                "hypertensive Entgleisung. Eine Kontrolle beim Hausarzt wird empfohlen.<BR><BR>"
                "Entlassungsmedikation:<BR>Xarelto 20mg oral 1 0 0 0 ST<BR>Ramipril 5mg oral 1 0 0 0 ST<BR>"
                "Mit freundlichen Grüßen<BR>Dr. Arzt")
-LETTER_2016 = ("Frau<BR>Testpatientin<BR><BR>Diagnosen:<BR>Arterielle Hypertonie<BR><BR>"
+LETTER_2016 = ("Frau<BR>Testpatientin<BR><BR>Diagnosen:<BR>Arterielle Hypertonie<BR>"
+               "Gonarthrose links<BR>Z.n. Tonsillektomie 10/2018<BR>Z.n. Appendektomie 03/2001<BR><BR>"
                "Befunde:<BR>Gewicht: 72 kg<BR><BR>"
                "Entlassungsmedikation:<BR>Xarelto 20mg oral 1 0 0 0 ST<BR>Ramipril 5mg oral 1 0 1 0 ST<BR>"
                "Mit freundlichen Grüßen<BR>Dr. Arzt")
-DUPLEX_A = "Befund:<BR>Links zeigt sich an der A. carotis interna eine Stenose von etwa 50 Prozent durch Plaques."
-DUPLEX_B = "Befund:<BR>Rechts zeigt sich an der A. carotis interna eine Stenose von etwa 50 Prozent durch Plaques."
+DUPLEX_A = "Befund:<BR>Links findet sich in der A. carotis interna eine Stenose von etwa 50 Prozent durch Plaques."
+DUPLEX_B = "Befund:<BR>Rechts findet sich in der A. carotis interna eine Stenose von etwa 50 Prozent durch Plaques."
 
 
 def _doc(i, d, text, title="Patientenbrief"):
@@ -154,6 +156,14 @@ def test_changed_dose_is_not_merged_as_duplicate(remarker, tree):
 def test_laterality_contradiction_candidate(remarker):
     kinds = {(tuple(sorted(c.doc_ids)), c.kind) for c in remarker.ix.contradictions}
     assert (("R1", "R2"), "laterality") in kinds
+
+
+def test_short_diagnosis_lines_with_opposite_sides_or_dates(remarker):
+    """Glued list lines: 'Gonarthrose rechts' vs 'links', 'Tonsillektomie 10/2015' vs '10/2018'."""
+    cands = [c for c in remarker.ix.contradictions if set(c.doc_ids) == {"D1", "D2"}]
+    assert any(c.kind == "laterality" and c.differing == ["links", "rechts"] for c in cands)
+    assert any(c.kind == "date" and c.differing == ["10/2015", "10/2018"] for c in cands)
+    assert not any(c.kind == "date" and "03/2001" in c.differing for c in cands)  # same date twice
 
 
 def test_dose_change_between_stays_is_not_a_contradiction(remarker):

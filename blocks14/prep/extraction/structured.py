@@ -10,9 +10,10 @@ VERSION = "labelled-fields-v1"
 NUM = r"\d+(?:[.,]\d+)?"
 CONTEXT = re.compile(r"\b(?:kein\w*|nicht|ohne|Verdacht|Vd\.?\s*a\.?|Zielwert|Sollwert|Referenz|früher|damals|Familienanamnese|geplant\w*|empfohlen|soll)\b|\?", re.I)
 MEASURES = [
-    ("body_weight", "Weight", "vitals", rf"Gewicht\s*:\s*({NUM})\s*(kg|g)"),
-    ("body_height", "Height", "vitals", rf"Größe\s*:\s*({NUM})\s*(cm|m)"),
-    ("body_mass_index", "Recorded BMI", "vitals", rf"BMI\s*:\s*({NUM})(?:\s*(kg/m2|kg/m²))?"),
+    # "Gewicht: 74 kg", "Körpergewicht: 74 kg" and the inline "Größe 167 cm, Gewicht 74 kg, BMI 20,2"
+    ("body_weight", "Weight", "vitals", rf"\b(?:Körper)?[Gg]ewicht\s*:?\s*({NUM})\s*(kg|g)\b"),
+    ("body_height", "Height", "vitals", rf"\b(?:Körper)?[Gg]röße\s*:?\s*({NUM})\s*(cm|m)\b"),
+    ("body_mass_index", "Recorded BMI", "vitals", rf"\bBMI\s*:?\s*({NUM})(?:\s*(kg/m2|kg/m²))?"),
     ("body_temperature", "Temperature", "vitals", rf"Körpertemperatur\s*:\s*({NUM})\s*(°\s*C)"),
     ("heart_rate", "Heart rate", "vitals", rf"HF\s*:?\s*({NUM})\s*(/min|bpm)"),
     ("ejection_fraction", "Ejection fraction", "functional_tests", rf"\bEF\s*:?\s*({NUM})\s*(%)"),

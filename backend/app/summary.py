@@ -737,8 +737,9 @@ class Finalizer:
                 out.append(Conflict(segment_ids=cand.segment_ids, doc_ids=cand.doc_ids, kind=cand.kind,
                                     differing=cand.differing, explanation=expl, confirmed_by="llm",
                                     items=list(cand.items)))
-            elif cand.kind == "laterality" and len(cand.segment_ids) >= 2:
-                # near-identical passages that name different sides cannot both be true
+            elif cand.kind in ("laterality", "date") and len(cand.segment_ids) >= 2:
+                # near-identical passages that name different sides, or two dates for the same
+                # past event, cannot both be true
                 out.append(Conflict(segment_ids=cand.segment_ids, doc_ids=cand.doc_ids, kind=cand.kind,
                                     differing=cand.differing, explanation=rule_expl, confirmed_by="rule",
                                     items=list(cand.items)))

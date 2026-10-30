@@ -557,37 +557,57 @@ def _near_duplicates(segs: list[_Seg]) -> list[ContradictionCandidate]:
 SIDE_CORE_STOP = {"diagnose", "diagnosen", "dg", "st", "p", "z", "n", "v", "a", "bei", "mit", "und", "der", "die", "das"}
 
 
-def _side_conflicts(segs: list[_Seg], known: list[ContradictionCandidate]) -> list[ContradictionCandidate]:
-    """The same short finding with opposite sides in two documents ("Gonarthrose rechts" vs "links").
+# a month/year, a day.month.year or a bare year, as written in a diagnosis line ("Z.n. OP 10/2015")
+DATE_TOKEN = re.compile(r"(?<![\d./])(?:\d{1,2}\.\d{1,2}\.\d{4}|\d{1,2}/\d{4}|(?:19|20)\d{2})(?![\d./])")
 
-    The near-duplicate detector needs five shared words, so diagnosis-list lines never reach it.
-    Here the words other than the side must be identical and contain a real term (6+ letters).
+
+def _side_conflicts(segs: list[_Seg], known: list[ContradictionCandidate]) -> list[ContradictionCandidate]:
+    """The same short line in two documents with the opposite side or another date:
+    "Gonarthrose rechts" vs "Gonarthrose links", "Z.n. Tonsillektomie 10/2015" vs "10/2018".
+
+    The near-duplicate detector needs five shared words, so diagnosis-list lines never reach it,
+    and its number rule rightly ignores values from different stays; the date of one past event
+    does not change between stays. Lines are compared one by one because the segmenter joins a
+    short line to its neighbour. The words other than the side or date must be identical and
+    contain a real term (6+ letters).
     """
     side_words = {w: s for s, ws in SIDES.items() for w in ws}
-    by_core: dict[frozenset, list[tuple[str, _Seg]]] = {}
+    by_core: dict[frozenset, list[tuple[str | None, frozenset, _Seg]]] = {}
     for sg in segs:
         if sg.seg.kind not in SCORED_KINDS:
             continue
-        words = set(normalize(f"{sg.seg.label} {sg.seg.text}").split())
-        sides = {side_words[w] for w in words if w in side_words} - {"both"}
-        core = frozenset(w for w in words if w not in side_words and w not in SIDE_CORE_STOP
-                         and not re.fullmatch(r"[\d.,]+", w))
-        if len(sides) != 1 or not core or len(core) > 4 or not any(len(w) >= 6 for w in core):
-            continue
-        by_core.setdefault(core, []).append((next(iter(sides)), sg))
-    done = {tuple(sorted(c.doc_ids)) for c in known if c.kind == "laterality"}
+        for n, line in enumerate(sg.seg.text.split("\n")):
+            words = set(normalize(f"{sg.seg.label} {line}" if n == 0 else line).split())
+            sides = {side_words[w] for w in words if w in side_words} - {"both"}
+            dates = frozenset(DATE_TOKEN.findall(line))
+            core = frozenset(w for w in words if w not in side_words and w not in SIDE_CORE_STOP
+                             and not re.fullmatch(r"[\d.,]+", w))
+            if len(sides) > 1 or len(dates) > 1 or not core or len(core) > 4 or not any(len(w) >= 6 for w in core):
+                continue
+            if not sides and not dates:
+                continue
+            by_core.setdefault(core, []).append((next(iter(sides), None), dates, sg))
+    done = {(tuple(sorted(c.doc_ids)), "laterality") for c in known if c.kind == "laterality"}
     out = []
     for core, entries in by_core.items():
-        for n, (side_a, a) in enumerate(entries):
-            for side_b, b in entries[n + 1:]:
-                pair = tuple(sorted((a.seg.doc_id, b.seg.doc_id)))
-                if side_a == side_b or a.seg.doc_id == b.seg.doc_id or pair in done:
+        for n, (side_a, dates_a, a) in enumerate(entries):
+            for side_b, dates_b, b in entries[n + 1:]:
+                if a.seg.doc_id == b.seg.doc_id:
                     continue
-                done.add(pair)
-                diff = sorted(w for w in set(a.norm.split()) ^ set(b.norm.split()) if w in side_words)
+                pair = tuple(sorted((a.seg.doc_id, b.seg.doc_id)))
+                if side_a and side_b and side_a != side_b:
+                    kind, diff = "laterality", sorted(w for w in set(a.norm.split()) ^ set(b.norm.split()) if w in side_words)
+                elif dates_a and dates_b and dates_a != dates_b and side_a == side_b:
+                    kind, diff = "date", sorted(dates_a | dates_b)
+                else:
+                    continue
+                key = (pair, kind) if kind == "laterality" else (pair, kind, core)
+                if key in done:
+                    continue
+                done.add(key)
                 out.append(ContradictionCandidate(
                     segment_ids=[a.seg.segment_id, b.seg.segment_id], doc_ids=[a.seg.doc_id, b.seg.doc_id],
-                    differing=diff, kind="laterality"))
+                    differing=diff, kind=kind))
     return out
 
 
