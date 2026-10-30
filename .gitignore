@@ -10,7 +10,7 @@ frontend/node_modules/
 frontend/dist/
 frontend/src/data/real/
 # never publish the challenge dataset or build output
-data/
+/data/
 *.zip
 clinical-ui/dist/
 clinical-ui/dist-single/

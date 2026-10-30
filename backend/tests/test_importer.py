@@ -117,3 +117,17 @@ def test_a_stored_import_never_replaces_a_patient_loaded_at_startup(offline, tmp
     again.add(startup)
     again.load_imports()
     assert again.find("Franz Testmann", "1948-02-11") is startup
+
+
+def test_knee_case_drug_table_plans_sides_and_allergy(offline):
+    """Invented patient 9999-0003: brand-name anticoagulant only in the discharge table, a planned
+    anaesthesia visit, knee side rechts vs links, allergy vs 'keine bekannt' (no embeddings)."""
+    app = offline
+    app.import_files(files_from_folder(Path(__file__).parent / "fixtures" / "patient-9999-0003"))
+    res = app.find("Eva Probst", "1952-09-30").assess("Anaesthetist, pre-operative check before knee replacement")
+    items = {i["item_id"]: i for i in res["result"]["items"]}
+    assert items["anticoagulants"]["flags"][0]["text"].startswith("Eliquis 5mg")
+    assert items["previous_anaesthesia"]["status"] == "not_documented"
+    assert items["current_medication"]["status"] == "found"
+    kinds = sorted(c["kind"] for c in res["result"]["conflicts"])
+    assert kinds == ["laterality", "status"]

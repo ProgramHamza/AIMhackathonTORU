@@ -1,0 +1,2046 @@
+# Decision graph: which patient facts a role needs for a task.
+#
+# Layers
+#   domains  : fact domains, based on the International Patient Summary (IPS) sections.
+#              Every checklist item maps to one or more domains.
+#   nodes    : role, task, context and concept nodes.
+#              parent  : is-a edge. A matched node fully activates its ancestors
+#                        (an unknown kind of surgeon still gets "perioperative").
+#              implies : weighted edges to other nodes. A concept such as "colonoscopy"
+#                        activates "invasive_procedure" and "region_gi" with that weight.
+#   items    : checklist items (the questions a clinician wants answered).
+#   rules    : hyperedges "when all these nodes are active, add / raise / suppress items".
+#              Weight = priority (critical 1.0, high 0.7, normal 0.45) x weakest node activation.
+#              A rule with more conditions overrides fewer for the items it mentions.
+#   links    : weighted item -> item edges (one hop), e.g. anticoagulants -> coagulation.
+#
+# Matching terms are lower-case. Umlauts are folded (ä -> ae) before matching, so write
+# either form. A trailing * matches any word ending ("anaesthe*" matches "anaesthetist");
+# a leading * matches any word beginning ("*ectomy" matches "cholecystectomy").
+#
+# `sources` name the published checklist or guideline an item or rule is based on.
+# All thresholds belong in block 6 filters, not here, and need clinical review.
+
+version: 2
+priorities: [critical, high, normal]
+
+domains:
+  problems: Active problems and diagnoses (IPS Problem List)
+  past_problems: Resolved problems and past operations (IPS History of Past Problems)
+  allergies: Allergies and intolerances (IPS)
+  medications: Medication (IPS Medication Summary)
+  procedures: Procedures, done or planned (IPS History of Procedures)
+  results_lab: Laboratory results (IPS Diagnostic Results)
+  results_pathology: Pathology and histology (IPS Diagnostic Results)
+  results_imaging: Imaging and functional diagnostics (IPS Diagnostic Results)
+  vital_signs: Vital signs and body measurements (IPS)
+  devices: Implants and medical devices (IPS)
+  functional_status: Function, cognition, performance status (IPS)
+  social_history: Social history, support, substance use (IPS)
+  family_history: Family history (not an IPS section, common in letters)
+  pregnancy: Pregnancy (IPS)
+  plan_of_care: Recommendations, planned care, follow-ups (IPS Plan of Care)
+  alerts: Warnings such as CAVE entries (IPS Alerts)
+  advance_directives: Advance directives and consent (IPS)
+  encounters: Hospital stays and their reasons
+
+sources:
+  IPS: HL7 FHIR International Patient Summary, section list
+  ESAIC: ESAIC 2025 guideline, preoperative assessment of adults, noncardiac surgery
+  WHO-SSC: WHO Surgical Safety Checklist, Sign In
+  ESC-NCS: ESC 2022 guideline, cardiovascular assessment for noncardiac surgery
+  SAMPLE: SAMPLE / AMPLE emergency history
+  ESUR: ESUR contrast media safety guideline
+  ADA: ADA Standards of Care, diabetes review
+  ESMO-MDT: ESMO breast cancer multidisciplinary work, tumour board datasets
+  IPASS: I-PASS handover
+  STOPP: STOPP/START v3 medication review
+
+# ---------------------------------------------------------------------------
+# Checklist items
+# terms: words used to find evidence in documents (block 7 retrieval, flagging).
+# ask:   phrases in the clinician's prompt that request the item explicitly.
+#        An explicitly asked item is shown even if a rule suppresses it.
+# codes: code prefixes that facts can match (ICD-10 for diagnoses, ATC for drugs).
+# time_rule: current = state as of the as-of date, latest = most recent value,
+#            history = all values over time.
+# ---------------------------------------------------------------------------
+items:
+  allergies:
+    label: {en: Allergies and reactions, de: Allergien und Reaktionen}
+    question: Which allergies or intolerances are documented, with which reactions?
+    domains: [allergies, alerts]
+    time_rule: history
+    terms:
+      en: [allergy, allergic, intolerance, reaction, anaphylaxis]
+      de: [allergie*, allergisch, unvertraeglichkeit, cave, reaktion, anaphylaxie]
+      abbr: [km-allergie]
+    ask: [allerg*, intoleran*]
+    codes: {icd10: [Z88, T78, T88.6, T88.7]}
+    sources: [IPS, WHO-SSC, SAMPLE]
+
+  contrast_reaction:
+    label: {en: Previous contrast media reaction, de: Frühere Kontrastmittelreaktion}
+    question: Is a reaction or allergy to contrast media documented?
+    domains: [allergies, alerts, procedures]
+    time_rule: history
+    terms:
+      en: [contrast, contrast media, contrast agent, iodinated]
+      de: [kontrastmittel*, km, jodhaltig*, nativ]
+      abbr: [km, km-allergie]
+    ask: [contrast*, kontrastmittel*]
+    codes: {icd10: [Z88.8, T88.7]}
+    sources: [ESUR]
+
+  current_medication:
+    label: {en: Current medication, de: Aktuelle Medikation}
+    question: Which drugs does the patient take as of the reference date, with doses?
+    domains: [medications]
+    time_rule: current
+    terms:
+      en: [medication, drug, dose, tablet, discharge medication]
+      de: [medikation, medikament*, dauermedikation, entlassungsmedikation, dosis, tabl*]
+    ask: [medication*, drugs, medikament*, medikation, tablet*, pill*, tabletten]
+    sources: [IPS, SAMPLE, STOPP]
+
+  anticoagulants:
+    label: {en: Anticoagulants and antiplatelets, de: Antikoagulanzien und Thrombozytenaggregationshemmer}
+    question: Which blood thinners does the patient take, at which dose?
+    domains: [medications]
+    filters: {drug_class: antithrombotic}
+    time_rule: current
+    terms:
+      en: [anticoagulant, antiplatelet, blood thinner, aspirin, acetylsalicylic acid]
+      de: [antikoagul*, thrombozytenaggregationshemm*, blutverduenn*, ass, acetylsalicyl*, heparin, marcumar, clopidogrel,
+           marcoumar, phenprocoumon, sintrom, acenocoumarol, warfarin, apixaban, eliquis, rivaroxaban, xarelto, edoxaban,
+           lixiana, dabigatran, pradaxa, enoxaparin, lovenox, dalteparin, fragmin, plavix, ticagrelor, brilique, prasugrel, efient]
+      abbr: [ass, thrombo ass, noak, doak]
+    ask: [anticoag*, antiplatelet*, antithrombotic*, blood thinner*, blutverduenn*, gerinnungshemm*]
+    codes: {atc: [B01]}
+    sources: [ESC-NCS, ESAIC, SAMPLE]
+
+  antihypertensives:
+    label: {en: Blood pressure medication, de: Antihypertensive Medikation}
+    question: Which antihypertensive drugs does the patient take, at which dose?
+    domains: [medications]
+    filters: {drug_class: antihypertensive}
+    time_rule: current
+    terms:
+      en: [antihypertensive, blood pressure medication]
+      de: [antihypertensiv*, blutdrucksenk*, bisoprolol, metoprolol, nebivolol, carvedilol, ramipril, enalapril, lisinopril,
+           perindopril, candesartan, valsartan, losartan, irbesartan, telmisartan, olmesartan, amlodipin, lercanidipin, nifedipin,
+           felodipin, hydrochlorothiazid, chlortalidon, indapamid, furosemid, torasemid, spironolacton, eplerenon, doxazosin,
+           moxonidin, urapidil, concor, nebilet, blopress, diovan, coversum, tritace, lasix]
+    ask: [antihypertensive*, blood pressure drug*, blood pressure medication*]
+    codes: {atc: [C02, C03, C07, C08, C09]}
+    sources: [IPS]
+
+  glucose_lowering:
+    label: {en: Glucose-lowering medication, de: Antidiabetische Medikation}
+    question: Which glucose-lowering drugs does the patient take, at which dose?
+    domains: [medications]
+    filters: {drug_class: glucose_lowering}
+    time_rule: current
+    terms:
+      en: [antidiabetic, insulin, metformin, glucose-lowering]
+      de: [antidiabetika, antidiabetisch*, insulin, metformin, glucophage, sitagliptin, januvia, vildagliptin, empagliflozin,
+           jardiance, dapagliflozin, forxiga, gliclazid, glimepirid, liraglutid, victoza, semaglutid, ozempic, dulaglutid,
+           trulicity, exenatid, byetta, pioglitazon, actos]
+    ask: [glucose-lowering, antidiabetic*, insulin]
+    codes: {atc: [A10]}
+    sources: [ADA]
+
+  contrast_relevant_meds:
+    label: {en: Drugs relevant before contrast, de: Medikamente relevant vor Kontrastmittel}
+    question: Does the patient take drugs that matter before iodinated contrast (e.g. metformin, NSAIDs)?
+    domains: [medications]
+    filters: {drug_class: contrast_relevant}
+    time_rule: current
+    terms:
+      en: [metformin, nsaid]
+      de: [metformin, nsar]
+    codes: {atc: [A10BA, A10BD, M01A]}
+    sources: [ESUR]
+
+  steroids_immunosuppressants:
+    label: {en: Steroids and immunosuppressants, de: Steroide und Immunsuppressiva}
+    question: Does the patient take corticosteroids or immunosuppressants?
+    domains: [medications]
+    filters: {drug_class: immunomodulating}
+    time_rule: current
+    terms:
+      en: [steroid, cortisone, prednisolone, immunosuppressant]
+      de: [kortison, cortison, prednisolon, steroid*, immunsuppress*, prednison, methylprednisolon, urbason, dexamethason,
+           hydrocortison, aprednislon, methotrexat, azathioprin, ciclosporin, tacrolimus, mycophenolat]
+    codes: {atc: [H02, L04]}
+    sources: [ESAIC, STOPP]
+
+  antiresorptive_drugs:
+    label: {en: Bisphosphonates and other bone drugs, de: Bisphosphonate und andere Knochenmedikamente}
+    question: Does the patient take bisphosphonates or other antiresorptive drugs (jaw osteonecrosis risk)?
+    domains: [medications]
+    filters: {drug_class: antiresorptive}
+    time_rule: current
+    terms:
+      en: [bisphosphonate, alendronate, denosumab, zoledronic acid]
+      de: [bisphosphonat*, alendronat*, denosumab, zoledronsaeure]
+    ask: [bisphosphonat*, alendronat*, denosumab]
+    codes: {atc: [M05B, M05X]}
+    sources: [STOPP]
+
+  previous_anaesthesia:
+    label: {en: Previous anaesthesia and complications, de: Frühere Narkosen und Komplikationen}
+    question: Which anaesthesias did the patient have, and were there complications?
+    domains: [past_problems, procedures, alerts]
+    time_rule: history
+    terms:
+      en: [anaesthesia, anesthesia, intubation, ponv, malignant hyperthermia]
+      de: [narkose*, anaesthesie*, intubation, ponv, maligne hyperthermie, narkosezwischenfall, vollnarkose,
+           allgemeinanaesthesie, spinalanaesthesie, regionalanaesthesie, intubationsnarkose]
+      abbr: [ponv, itn]
+    ask: [previous anaesthe*, previous anesthe*, anaesthetic history, narkose*]
+    codes: {icd10: [T88.2, T88.3, T88.5]}
+    sources: [ESAIC, WHO-SSC]
+
+  airway_aspiration_risk:
+    label: {en: Airway and aspiration risk, de: Atemweg und Aspirationsrisiko}
+    question: Is anything documented that affects the airway or aspiration risk (sleep apnoea, reflux, hiatus hernia, obesity, difficult intubation)?
+    domains: [problems, past_problems, vital_signs]
+    time_rule: history
+    terms:
+      en: [sleep apnoea, sleep apnea, reflux, hiatus hernia, difficult airway, obesity]
+      de: [schlafapnoe, reflux*, hiatushernie, gerd, schwierige intubation, adipositas, uebergewicht]
+      abbr: [osas, gerd]
+    ask: [airway, aspiration, atemweg*, apnoe*, apnea, apnoea, snoring, schnarch*]
+    codes: {icd10: [G47.3, K21, K44, E66]}
+    sources: [ESAIC, WHO-SSC]
+
+  cardiac_function:
+    label: {en: Heart function, de: Herzfunktion}
+    question: What is the latest documented heart function (ejection fraction, echocardiography)?
+    domains: [results_imaging, problems]
+    time_rule: latest
+    terms:
+      en: [ejection fraction, echocardiography, ventricular function, heart failure, valve]
+      de: [ejektionsfraktion, echokardiograph*, herzecho, ventrikelfunktion, herzinsuffizienz, klappe*]
+      abbr: [ef, lvef, tte, tee]
+    ask: [ejection fraction, heart function, cardiac function, herzfunktion, echo, echocardiogra*, herzecho]
+    codes: {icd10: [I50, I34, I35]}
+    sources: [ESC-NCS, ESAIC]
+
+  cardiac_rhythm:
+    label: {en: Heart rhythm and ECG, de: Herzrhythmus und EKG}
+    question: What do ECG and long-term ECG show (rhythm, arrhythmias)?
+    domains: [results_imaging, problems]
+    time_rule: latest
+    terms:
+      en: [ecg, holter, arrhythmia, atrial fibrillation, sinus rhythm]
+      de: [ekg, langzeit-ekg, rhythmus, arrhythmie*, vorhofflimmern, sinusrhythmus]
+      abbr: [ekg, lz-ekg, vhf, sves, ves]
+    ask: [ecg, rhythm, arrhythmi*, ekg]
+    codes: {icd10: [I47, I48, I49]}
+    sources: [ESC-NCS]
+
+  respiratory_status:
+    label: {en: Lung disease and breathing, de: Lungenerkrankung und Atmung}
+    question: Which lung disease, lung function results and oxygen need are documented?
+    domains: [problems, results_lab, functional_status]
+    time_rule: latest
+    terms:
+      en: [copd, asthma, lung function, fev1, oxygen therapy, home oxygen, respiratory failure, emphysema]
+      de: [copd, asthma, lungenfunktion*, fev1, sauerstofftherapie, sauerstoff, langzeitsauerstoff*, respiratorische insuffizienz,
+           blutgas*, emphysem*, lungenfibrose, exazerbation, atemnot, belastungsdyspnoe]
+      abbr: [copd, ltot, fev1]
+    ask: [lung*, breath*, respirat*, copd, asthma, oxygen, atemweg*, lunge*, sauerstoff*]
+    codes: {icd10: [J4, J96, J84]}
+    sources: [ESAIC, IPS]
+
+  functional_capacity:
+    label: {en: Exercise capacity, de: Belastbarkeit}
+    question: What is documented about exercise capacity (METs, stairs, walking distance)?
+    domains: [functional_status]
+    time_rule: latest
+    terms:
+      en: [exercise capacity, mets, walking distance, stairs]
+      de: [belastbarkeit, belastbar, mets, gehstrecke, treppen*, belastungsdyspnoe, stockwerk*]
+    ask: [exercise capacity, functional capacity, belastbarkeit, exercise, sport, training]
+    sources: [ESAIC, ESC-NCS]
+
+  kidney_function:
+    label: {en: Kidney function, de: Nierenfunktion}
+    question: What is the latest kidney function (creatinine, eGFR)?
+    domains: [results_lab, problems]
+    time_rule: latest
+    terms:
+      en: [kidney function, renal function, creatinine, egfr]
+      de: [nierenfunktion, niereninsuffizienz, kreatinin, egfr, harnstoff]
+      abbr: [egfr, gfr, krea]
+    ask: [kidney*, renal, creatinine, egfr, niere*]
+    codes: {icd10: [N17, N18, N19]}
+    sources: [ESUR, ADA, STOPP]
+
+  liver_function:
+    label: {en: Liver function, de: Leberfunktion}
+    question: What is documented about liver function or liver disease?
+    domains: [results_lab, problems]
+    time_rule: latest
+    terms:
+      en: [liver function, liver enzymes, cirrhosis, hepatitis, bilirubin]
+      de: [leberfunktion, leberwerte, zirrhose, hepatitis, bilirubin, transaminasen]
+      abbr: [got, gpt, ggt, ast, alt]
+    ask: [liver*, hepat*, leber*]
+    codes: {icd10: [K70, K72, K73, K74, K75, K76, B15, B16, B17, B18]}
+    sources: [ESAIC, STOPP]
+
+  coagulation_bleeding:
+    label: {en: Coagulation and bleeding history, de: Gerinnung und Blutungsanamnese}
+    question: Are coagulation values or a bleeding tendency documented?
+    domains: [results_lab, problems]
+    time_rule: latest
+    terms:
+      en: [coagulation, bleeding tendency, inr, platelets]
+      de: [gerinnung*, blutungsneigung, inr, quick, thrombozyten, ptt]
+      abbr: [inr, ptt, plt]
+    ask: [coagulation, bleeding, gerinnung*, blutung*, thrombozytopen*, thrombocytopen*, platelets]
+    codes: {icd10: [D65, D66, D67, D68, D69]}
+    sources: [ESAIC, WHO-SSC]
+
+  diabetes_control:
+    label: {en: Diabetes control, de: Diabeteseinstellung}
+    question: What is the latest HbA1c and how well is diabetes controlled?
+    domains: [results_lab, problems]
+    time_rule: latest
+    terms:
+      en: [hba1c, diabetes control, blood glucose]
+      de: [hba1c, blutzucker, eingestellt*, diabetes mellitus]
+      abbr: [hba1c, bz, dm, niddm, dmii]
+    ask: [hba1c, diabetes control, glucose control]
+    codes: {icd10: [E10, E11, E12, E13, E14]}
+    sources: [ADA]
+
+  weight_bmi:
+    label: {en: Weight and BMI over time, de: Gewicht und BMI im Verlauf}
+    question: How did weight and BMI change over time?
+    domains: [vital_signs]
+    time_rule: history
+    terms:
+      en: [weight, bmi, height, weight loss]
+      de: [gewicht, bmi, groesse, gewichtsverlust, gewichtsabnahme]
+      abbr: [bmi]
+    ask: [weight*, bmi, gewicht*]
+    sources: [ADA, IPS]
+
+  blood_pressure:
+    label: {en: Blood pressure, de: Blutdruck}
+    question: What are the documented blood pressure values and their course?
+    domains: [vital_signs, results_imaging]
+    time_rule: history
+    terms:
+      en: [blood pressure, hypertension, hypertensive crisis, 24-hour blood pressure]
+      de: [blutdruck, hypertonie, hypertensive krise, blutdruckentgleisung, 24h-rr]
+      abbr: [rr, htn, abdm]
+    ask: [blood pressure, hypertens*, blutdruck*]
+    codes: {icd10: [I10, I11, I12, I13, I15]}
+    sources: [ADA, IPS]
+
+  vital_signs_latest:
+    label: {en: Latest vital signs, de: Aktuelle Vitalparameter}
+    question: What are the latest documented vital signs?
+    domains: [vital_signs]
+    time_rule: latest
+    terms:
+      en: [heart rate, temperature, oxygen saturation, vital signs]
+      de: [herzfrequenz, temperatur, koerpertemperatur, saettigung, vitalparameter]
+      abbr: [hf, spo2]
+    ask: [vital sign*, vitals, vitalparameter]
+    sources: [IPS, IPASS]
+
+  active_problems:
+    label: {en: Active problems, de: Aktuelle Diagnosen}
+    question: Which diagnoses are currently active?
+    domains: [problems]
+    time_rule: current
+    terms:
+      en: [diagnosis, diagnoses]
+      de: [diagnose*, hauptdiagnose, nebendiagnose*]
+    ask: [diagnos*, problem list]
+    sources: [IPS, IPASS, SAMPLE]
+
+  past_problems_surgeries:
+    label: {en: Past illnesses and operations, de: Vorerkrankungen und Voroperationen}
+    question: Which past illnesses and operations are documented?
+    domains: [past_problems, procedures]
+    time_rule: history
+    terms:
+      en: [history of, previous surgery, status post]
+      de: [status post, zustand nach, voroperation*, vorerkrankung*, anamnese]
+      abbr: [st.p., z.n., s.p.]
+    ask: [past history, previous surg*, medical history, vorerkrank*]
+    sources: [IPS, SAMPLE]
+
+  recent_admissions:
+    label: {en: Hospital stays and reasons, de: Aufenthalte und Aufnahmegründe}
+    question: Which hospital stays are documented, and why was the patient admitted?
+    domains: [encounters, problems]
+    time_rule: history
+    terms:
+      en: [admission, admitted, discharged, hospital stay]
+      de: [aufnahme, aufgenommen, entlassen, aufenthalt, einweisung*]
+    ask: [admission*, hospital stay*, aufenthalt*, spital*, krankenhausaufenthalt*, stationaer*]
+    sources: [IPS, IPASS]
+
+  cancer_histology:
+    label: {en: Tumour histology and grade, de: Tumorhistologie und Grading}
+    question: What is the histological tumour type and grade?
+    domains: [results_pathology, problems]
+    time_rule: latest
+    terms:
+      en: [histology, carcinoma, biopsy, grade, invasive]
+      de: [histologie, karzinom, stanzbiopsie, biopsie, grading, invasiv]
+      abbr: [g1, g2, g3, ca]
+    ask: [histolog*, tumour type, tumor type, histologie]
+    codes: {icd10: [C, D0]}
+    sources: [ESMO-MDT]
+
+  cancer_staging:
+    label: {en: Tumour stage (TNM), de: Tumorstadium (TNM)}
+    question: What is the tumour stage (TNM)?
+    domains: [results_pathology, problems]
+    time_rule: latest
+    terms:
+      en: [tnm, stage, staging, lymph nodes, metastasis]
+      de: [tnm, tumorstadium, uicc, staging, lymphknoten, metastase*]
+      abbr: [tnm]
+    ask: [tnm, stag*, stadium]
+    codes: {icd10: [C, D0]}
+    sources: [ESMO-MDT]
+
+  tumour_receptors:
+    label: {en: Receptor status and proliferation, de: Rezeptorstatus und Proliferation}
+    question: What are the hormone receptor and HER2 status and the Ki-67 rate?
+    domains: [results_pathology]
+    time_rule: latest
+    terms:
+      en: [oestrogen receptor, estrogen receptor, progesterone receptor, her2, ki-67, allred]
+      de: [oestrogenrezeptor, progesteronrezeptor, hormonrezeptor*, her2*, ki67*, allred*]
+      abbr: [er, pr, pgr, her2, ki-67, ki67]
+    ask: [receptor*, her2, ki-67, ki67, rezeptor*]
+    sources: [ESMO-MDT]
+
+  tumour_board_plan:
+    label: {en: Tumour board recommendation, de: Tumorboard-Empfehlung}
+    question: What did the tumour board recommend, and when is the treatment scheduled?
+    domains: [plan_of_care, procedures]
+    time_rule: latest
+    terms:
+      en: [tumour board, tumor board, recommended, scheduled]
+      de: [tumorboard, empfohlen, empfehlung, geplant, terminisiert]
+    ask: [tumour board recommend*, tumor board recommend*, tumorboard-empfehlung]
+    sources: [ESMO-MDT]
+
+  planned_procedures:
+    label: {en: Planned procedures, de: Geplante Eingriffe}
+    question: Which procedures are planned, and when?
+    domains: [procedures, plan_of_care]
+    time_rule: current
+    terms:
+      en: [planned, scheduled, surgery, operation, procedure]
+      de: [geplant, terminisiert, operation, eingriff, procedere, resektion]
+    ask: [planned procedure*, scheduled, geplant*]
+    sources: [IPS, WHO-SSC]
+
+  imaging_findings:
+    label: {en: Imaging findings, de: Bildgebende Befunde}
+    question: What do the imaging studies show?
+    domains: [results_imaging]
+    time_rule: history
+    terms:
+      en: [ultrasound, ct, mri, x-ray, mammography, finding]
+      de: [sonographie, ultraschall, ct, mrt, roentgen, mammographie, befund]
+      abbr: [ct, mrt, us, bi-rads]
+    ask: [imaging, scan*, bildgebung, nodule*, knoten, finding*, befund*]
+    sources: [IPS]
+
+  vascular_findings:
+    label: {en: Vascular findings, de: Gefäßbefunde}
+    question: Which vascular findings are documented (stenoses, plaques, side and degree)?
+    domains: [results_imaging, problems]
+    time_rule: history
+    terms:
+      en: [stenosis, plaque, carotid, duplex, atherosclerosis]
+      de: [stenose, plaque*, karotis, carotis, duplex*, arteriosklerose, atherosklero*]
+      abbr: [aci, acc, ica]
+    ask: [stenos*, carotid*, vascular, gefaess*]
+    codes: {icd10: [I65, I66, I70]}
+    sources: [IPS]
+
+  eye_findings:
+    label: {en: Eye findings, de: Augenbefunde}
+    question: What eye findings are documented?
+    domains: [results_imaging, problems]
+    time_rule: history
+    terms:
+      en: [retina, fundus, retinopathy, vision, amaurosis]
+      de: [retina, fundus, retinopathie, sehstoerung, visus, amaurosis, augenkonsil]
+    ask: [eye*, vision, retin*, auge*]
+    codes: {icd10: [H34, H35, H53, H54, G45.3]}
+    sources: [ADA]
+
+  neuro_findings:
+    label: {en: Neurological findings, de: Neurologische Befunde}
+    question: What neurological findings or deficits are documented?
+    domains: [results_imaging, problems]
+    time_rule: history
+    terms:
+      en: [neurological deficit, stroke, tia, ischaemia, dizziness]
+      de: [fokalneurolog*, insult, schlaganfall, tia, ischaemie, schwindel, vertigo]
+      abbr: [tia, cct]
+    ask: [neurolog*, stroke, tia]
+    codes: {icd10: [G45, I63, I64, R42]}
+    sources: [IPS]
+
+  lab_results:
+    label: {en: Laboratory results, de: Laborbefunde}
+    question: Which laboratory results are documented?
+    domains: [results_lab]
+    time_rule: latest
+    terms:
+      en: [laboratory, lab, blood test]
+      de: [labor, laborbefund, blutbild, entzuendungsparameter]
+    ask: [lab*, blood test*]
+    sources: [IPS]
+
+  followups_recommended:
+    label: {en: Recommended follow-ups, de: Empfohlene Kontrollen}
+    question: Which follow-ups and controls were recommended, by when?
+    domains: [plan_of_care]
+    time_rule: history
+    terms:
+      en: [follow-up, control, recommended, check-up, in two months]
+      de: [kontrolle*, empfohlen, verlaufskontrolle, nachsorge, in 2 monaten, weiteres procedere]
+    ask: [follow-up*, follow up*, kontroll*]
+    sources: [IPASS, IPS]
+
+  followups_completed:
+    label: {en: Follow-ups carried out, de: Durchgeführte Kontrollen}
+    question: Is there a record that the recommended follow-ups took place?
+    domains: [procedures, results_imaging, results_lab]
+    time_rule: history
+    terms:
+      en: [follow-up, control examination]
+      de: [kontrolluntersuchung, verlaufskontrolle, nachkontrolle]
+    sources: [IPASS]
+
+  prior_similar_events:
+    label: {en: Similar previous episodes, de: Frühere ähnliche Episoden}
+    question: Did the presenting symptoms happen before, and what was found to be the cause?
+    domains: [problems, past_problems, encounters]
+    time_rule: history
+    terms:
+      en: [previous episode, recurrence, similar symptoms]
+      de: [rezidiv, erneut, wiederholt, zustand nach]
+    ask: [happened before, previous episode*, similar episode*, recurrent, again, recurring, wieder, erneut, rezidiv*]
+    sources: [SAMPLE, IPASS]
+
+  family_history:
+    label: {en: Family history, de: Familienanamnese}
+    question: What family history is documented?
+    domains: [family_history]
+    time_rule: history
+    terms:
+      en: [family history, hereditary]
+      de: [familienanamnese, familienanamnestisch, hereditaer, vorbelastung]
+    ask: [family histor*, familienanamnese]
+    sources: [ESMO-MDT]
+
+  social_history:
+    label: {en: Social situation and support, de: Soziale Situation und Unterstützung}
+    question: What is documented about social situation, support, smoking and alcohol?
+    domains: [social_history]
+    time_rule: latest
+    terms:
+      en: [lives with, family support, smoking, alcohol]
+      de: [lebt, familie, unterstuetzt, nikotin, raucher*, alkohol]
+    ask: [social, smok*, alcohol, sozial*]
+    sources: [IPS]
+
+  cognition_function:
+    label: {en: Cognition and performance status, de: Kognition und Allgemeinzustand}
+    question: What is documented about cognition and general condition (MMSE, ECOG)?
+    domains: [functional_status]
+    time_rule: latest
+    terms:
+      en: [mmse, ecog, general condition, cognition, orientation]
+      de: [mmse, ecog, allgemeinzustand, kognition, orientiert, wach, klar]
+      abbr: [az, mmse, ecog]
+    ask: [cognit*, ecog, mmse, allgemeinzustand]
+    sources: [IPS, ESMO-MDT]
+
+  devices_implants:
+    label: {en: Implants and devices, de: Implantate und Geräte}
+    question: Which implants or devices does the patient have (pacemaker, stents, prostheses)?
+    domains: [devices]
+    time_rule: current
+    terms:
+      en: [pacemaker, implant, stent, prosthesis, port]
+      de: [schrittmacher, implantat, stent, prothese, port]
+      abbr: [icd, ppm]
+    ask: [implant*, pacemaker, device*, schrittmacher]
+    sources: [IPS]
+
+  pregnancy:
+    label: {en: Pregnancy, de: Schwangerschaft}
+    question: Is a pregnancy or pregnancy test documented?
+    domains: [pregnancy]
+    time_rule: current
+    terms:
+      en: [pregnant, pregnancy]
+      de: [schwanger*, graviditaet]
+    ask: [pregnan*, schwanger*]
+    sources: [IPS, ESUR]
+
+  advance_directives:
+    label: {en: Advance directives and consent, de: Patientenverfügung und Einwilligung}
+    question: Are advance directives or consent documented?
+    domains: [advance_directives]
+    time_rule: current
+    terms:
+      en: [advance directive, consent, informed]
+      de: [patientenverfuegung, einwilligung, aufgeklaert]
+    ask: [advance directive*, consent, patientenverfuegung]
+    sources: [IPS]
+
+  infection_isolation:
+    label: {en: Infections and isolation, de: Infektionen und Isolation}
+    question: Are infections or isolation requirements (e.g. MRSA) documented?
+    domains: [problems, alerts]
+    time_rule: current
+    terms:
+      en: [infection, mrsa, isolation]
+      de: [infektion, mrsa, isolation, keim*]
+      abbr: [mrsa, vre, esbl]
+    ask: [infection*, mrsa, isolation]
+    sources: [IPS]
+
+  fall_risk_mobility:
+    label: {en: Mobility and fall risk, de: Mobilität und Sturzrisiko}
+    question: What is documented about mobility and fall risk?
+    domains: [functional_status]
+    time_rule: latest
+    terms:
+      en: [mobility, fall, gait, osteoporosis]
+      de: [mobilitaet, sturz*, gangbild, osteoporose]
+    ask: [mobility, falls, fall risk, sturz*, mobilis*, mobiliz*]
+    codes: {icd10: [M80, M81]}
+    sources: [IPS]
+
+  fasting_last_intake:
+    label: {en: Last oral intake, de: Letzte Nahrungsaufnahme}
+    question: When did the patient last eat or drink?
+    domains: [encounters]
+    time_rule: latest
+    terms:
+      en: [fasting, last meal, nil by mouth]
+      de: [nuechtern, letzte mahlzeit]
+    ask: [fasting, last meal, nuechtern]
+    sources: [SAMPLE, ESAIC]
+
+# ---------------------------------------------------------------------------
+# Nodes: roles, tasks, context, concepts. `match` holds prompt phrases (EN and DE).
+# Roles follow the Austrian specialist list (ÄAO 2015) plus non-physician professions.
+# ---------------------------------------------------------------------------
+nodes:
+  roles:
+    physician:
+      label: {en: Physician, de: Ärztin/Arzt}
+      match: [doctor, physician, clinician, arzt, aerztin, medic, on call, on-call, resident, house officer, dienstarzt, dienstaerztin, assistenzarzt, assistenzaerztin, stationsarzt, stationsaerztin]
+    perioperative:
+      parent: physician
+      label: {en: Perioperative medicine, de: Perioperative Medizin}
+      match: []
+    anaesthesiology:
+      parent: perioperative
+      label: {en: Anaesthesiology, de: Anästhesiologie}
+      match: [anaesthetist*, anesthetist*, anaesthesiolog*, anesthesiolog*, anaesthesist*, narkosearzt, narkoseaerztin]
+    intensive_care:
+      parent: physician
+      label: {en: Intensive care, de: Intensivmedizin}
+      match: [icu, intensive care, intensivist*, critical care, intensivmedizin*, intensivstation]
+    surgery:
+      parent: perioperative
+      label: {en: Surgery, de: Chirurgie}
+      match: [surgeon, chirurg*, operating surgeon]
+    visceral_surgery:
+      parent: surgery
+      label: {en: General and visceral surgery, de: Allgemein- und Viszeralchirurgie}
+      match: [general surgeon, visceral surgeon, abdominal surgeon, viszeralchirurg*, allgemeinchirurg*]
+    breast_surgery:
+      parent: surgery
+      label: {en: Breast surgery, de: Brustchirurgie}
+      match: [breast surgeon, senolog*, brustchirurg*]
+    vascular_surgery:
+      parent: surgery
+      label: {en: Vascular surgery, de: Gefäßchirurgie}
+      match: [vascular surgeon, gefaesschirurg*]
+    trauma_orthopaedics:
+      parent: surgery
+      label: {en: Trauma surgery and orthopaedics, de: Unfallchirurgie und Orthopädie}
+      match: [orthopaed*, orthoped*, trauma surgeon, unfallchirurg*]
+    cardiac_surgery:
+      parent: surgery
+      label: {en: Cardiac surgery, de: Herzchirurgie}
+      match: [cardiac surgeon, heart surgeon, herzchirurg*]
+    thoracic_surgery:
+      parent: surgery
+      label: {en: Thoracic surgery, de: Thoraxchirurgie}
+      match: [thoracic surgeon, thoraxchirurg*]
+    neurosurgery:
+      parent: surgery
+      label: {en: Neurosurgery, de: Neurochirurgie}
+      match: [neurosurgeon*, neurochirurg*]
+    plastic_surgery:
+      parent: surgery
+      label: {en: Plastic surgery, de: Plastische Chirurgie}
+      match: [plastic surgeon, plastische chirurg*]
+    urology:
+      parent: surgery
+      label: {en: Urology, de: Urologie}
+      match: [urolog*]
+    ent:
+      parent: surgery
+      label: {en: Ear, nose and throat, de: Hals-, Nasen- und Ohrenheilkunde}
+      match: [ent, ent surgeon, ent doctor, otolaryngolog*, otorhinolaryngolog*, ear nose throat, hno, hno arzt, hno aerztin]
+    dentistry:
+      parent: perioperative
+      label: {en: Dentistry and oral surgery, de: Zahnmedizin und Kieferchirurgie}
+      match: [dentist*, dental surgeon, oral surgeon, maxillofacial surgeon, zahnarzt, zahnaerztin, kieferchirurg*, mkg]
+    gynaecology:
+      parent: perioperative
+      label: {en: Gynaecology and obstetrics, de: Gynäkologie und Geburtshilfe}
+      match: [gynaecolog*, gynecolog*, gynaekolog*, obstetrician, frauenarzt, frauenaerztin]
+    ophthalmology:
+      parent: perioperative
+      label: {en: Ophthalmology, de: Augenheilkunde}
+      match: [ophthalmolog*, eye doctor, eye surgeon, augenarzt, augenaerztin]
+    internal_medicine:
+      parent: physician
+      label: {en: Internal medicine, de: Innere Medizin}
+      match: [internist*, internal medicine, innere medizin]
+    cardiology:
+      parent: internal_medicine
+      label: {en: Cardiology, de: Kardiologie}
+      match: [cardiolog*, kardiolog*]
+    angiology:
+      parent: internal_medicine
+      label: {en: Angiology, de: Angiologie}
+      match: [angiolog*]
+    endocrinology:
+      parent: internal_medicine
+      label: {en: Endocrinology and diabetology, de: Endokrinologie und Diabetologie}
+      match: [endocrinolog*, diabetolog*, endokrinolog*]
+    nephrology:
+      parent: internal_medicine
+      label: {en: Nephrology, de: Nephrologie}
+      match: [nephrolog*]
+    gastroenterology:
+      parent: internal_medicine
+      label: {en: Gastroenterology and hepatology, de: Gastroenterologie und Hepatologie}
+      match: [gastroenterolog*, hepatolog*]
+    oncology:
+      parent: internal_medicine
+      label: {en: Haemato-oncology, de: Hämato-Onkologie}
+      match: [oncolog*, onkolog*, haematolog*, hematolog*]
+    pulmonology:
+      parent: internal_medicine
+      label: {en: Pulmonology, de: Pneumologie}
+      match: [pulmonolog*, pneumolog*, lung specialist, chest physician, lungenfacharzt]
+    rheumatology:
+      parent: internal_medicine
+      label: {en: Rheumatology, de: Rheumatologie}
+      match: [rheumatolog*]
+    infectiology:
+      parent: internal_medicine
+      label: {en: Infectious diseases, de: Infektiologie}
+      match: [infectious disease*, infectiolog*, infektiolog*]
+    geriatrics:
+      parent: internal_medicine
+      label: {en: Geriatrics, de: Geriatrie}
+      match: [geriatric*, geriatrician*, geriater*, geriatrie]
+    emergency_medicine:
+      parent: physician
+      label: {en: Emergency medicine, de: Notfallmedizin}
+      match: [emergency physician, emergency doctor, er doctor, ed doctor, notarzt, notaerztin, notfallmedizin*, notfallmediziner*]
+    general_practice:
+      parent: physician
+      label: {en: General practice, de: Allgemeinmedizin}
+      match: [general practitioner, gp, family doctor, family physician, hausarzt, hausaerztin, allgemeinmedizin*]
+    radiology:
+      parent: physician
+      label: {en: Radiology, de: Radiologie}
+      match: [radiolog*]
+    nuclear_medicine:
+      parent: physician
+      label: {en: Nuclear medicine, de: Nuklearmedizin}
+      match: [nuclear medicine, nuklearmedizin*]
+    radiation_oncology:
+      parent: physician
+      label: {en: Radiation oncology, de: Strahlentherapie}
+      match: [radiation oncolog*, radiotherapist, strahlentherapeut*]
+    neurology:
+      parent: physician
+      label: {en: Neurology, de: Neurologie}
+      match: [neurolog*]
+    psychiatry:
+      parent: physician
+      label: {en: Psychiatry, de: Psychiatrie}
+      match: [psychiatr*]
+    dermatology:
+      parent: physician
+      label: {en: Dermatology, de: Dermatologie}
+      match: [dermatolog*, hautarzt, hautaerztin]
+    paediatrics:
+      parent: physician
+      label: {en: Paediatrics, de: Kinder- und Jugendheilkunde}
+      match: [paediatrician*, pediatrician*, kinderarzt, kinderaerztin]
+    pathology:
+      parent: physician
+      label: {en: Pathology, de: Pathologie}
+      match: [patholog*]
+    rehabilitation:
+      parent: physician
+      label: {en: Physical medicine and rehabilitation, de: Physikalische Medizin und Rehabilitation}
+      match: [rehabilitation physician, physical medicine, physikalische medizin]
+    occupational_medicine:
+      parent: physician
+      label: {en: Occupational medicine, de: Arbeitsmedizin}
+      match: [occupational health, occupational medicine, occupational physician, company doctor, arbeitsmedizin*, betriebsarzt, betriebsaerztin]
+    sports_medicine:
+      parent: physician
+      label: {en: Sports medicine, de: Sportmedizin}
+      match: [sports medicine, sports physician, sport medicine, team doctor, sportmedizin*, sportarzt, sportaerztin]
+    palliative_care:
+      parent: physician
+      label: {en: Palliative care, de: Palliativmedizin}
+      match: [palliative, palliativ*, hospice, hospiz]
+    nursing:
+      label: {en: Nursing, de: Pflege}
+      match: [nurse, nursing, pflege*, krankenschwester, krankenpfleger]
+    midwifery:
+      label: {en: Midwifery, de: Hebamme}
+      match: [midwife, midwives, midwifery, hebamme*]
+    pharmacy:
+      label: {en: Pharmacy, de: Pharmazie}
+      match: [pharmacist, pharmacy, apotheker*, pharmazeut*]
+    physiotherapy:
+      label: {en: Physiotherapy, de: Physiotherapie}
+      match: [physiotherap*, physical therapist, physio]
+
+  tasks:
+    preop:
+      label: {en: Pre-operative assessment, de: Präoperative Abklärung}
+      match: [pre-operative, preoperative, pre-op, preop, pre op, before surgery, before the operation, pre-assessment, preassessment, praeoperativ*, praemedikation*, op-freigabe, op freigabe, vor der operation, vor der op, vor op]
+    surgery_planning:
+      label: {en: Surgery planning, de: OP-Planung}
+      match: [surgery planning, planning her operation, planning his operation, planning the operation, operation planning, op-planung, operationsplanung]
+    tumour_board:
+      label: {en: Tumour board, de: Tumorboard}
+      match: [tumour board, tumor board, tumorboard, mdt, multidisciplinary]
+    emergency:
+      label: {en: Emergency presentation, de: Notfallvorstellung}
+      match: [emergency, arrives, presents, admitted acutely, night duty, notfall*, notaufnahme]
+    admission:
+      label: {en: Admission, de: Aufnahme}
+      match: [admitting, admission, admit, aufnahme, aufnehmen]
+    chronic_review:
+      label: {en: Chronic disease review, de: Verlaufskontrolle chronischer Erkrankung}
+      match: [review*, check-up, annual, routine visit, kontrolle, kontrolltermin, jahreskontrolle]
+    followup_review:
+      label: {en: Open follow-ups, de: Offene Kontrollen}
+      match: [follow-up*, follow up*, still open, open items, offene kontrollen, nachsorge]
+    medication_review:
+      label: {en: Medication review, de: Medikationsprüfung}
+      match: [medication review, drug review, polypharmacy, reconciliation, interaction*, drug interaction*,
+              medikationsanalyse, medikationspruefung, polypharmazie, wechselwirkung*, interaktion*]
+    handover:
+      label: {en: Handover or discharge, de: Übergabe oder Entlassung}
+      match: [handover, hand-off, discharge, uebergabe, entlassung]
+    consult:
+      label: {en: Consultation, de: Konsil}
+      match: [consult*, konsil*]
+
+  context:
+    surgery_planned:
+      label: {en: Surgery, de: Operation}
+      match: [surgery, operation, resection, reconstruction, excision, removal, exzision, "*ectomy", "*ektomie", "*plasty", "*plastik", "*otomy", "*otomie", operiert, resektion, rekonstruktion, eingriff, op]
+    anaesthesia_planned:
+      label: {en: Anaesthesia or sedation, de: Narkose oder Sedierung}
+      match: [general anaesthesia, general anesthesia, sedation, sedated, narkose, vollnarkose, sedierung, analgosedierung]
+    neuraxial_anaesthesia:
+      label: {en: Spinal or epidural anaesthesia, de: Rückenmarksnahe Anästhesie}
+      match: [spinal, epidural, neuraxial, spinalanaesthesie, periduralanaesthesie, pda]
+      implies: {anaesthesia_planned: 1.0}
+    invasive_procedure:
+      label: {en: Invasive procedure, de: Invasiver Eingriff}
+      match: [biops*, puncture, punktion, invasive, interventional, catheter*, katheter*, "*scopy", "*skopie"]
+    postop:
+      label: {en: After surgery, de: Postoperativ}
+      match: [after surgery, after the operation, after the surgery, after her operation, post-op, postop, postoperativ*, nach der operation, nach der op]
+    contrast_planned:
+      label: {en: Contrast imaging, de: Kontrastmittel-Bildgebung}
+      match: [contrast, ct angiography, cta, iodinated, gadolinium, kontrastmittel*, angiographie, angiography]
+    mri_planned:
+      label: {en: MRI, de: MRT}
+      match: [mri, mr scan, magnetic resonance, mrt, kernspin*]
+    radiotherapy_planned:
+      label: {en: Radiotherapy, de: Strahlentherapie}
+      match: [radiotherapy, radiation, irradiation, iort, bestrahlung]
+    region_breast:
+      label: {en: Breast, de: Brust}
+      match: [breast, mamma*, mammo*, brust*]
+    region_liver:
+      label: {en: Liver, de: Leber}
+      match: [liver, hepatic, leber*]
+    region_kidney:
+      label: {en: Kidney, de: Niere}
+      match: [kidney*, renal, niere*, nephrolith*, urolith*, stones, stone, nierenstein*]
+    region_heart:
+      label: {en: Heart, de: Herz}
+      match: [heart, cardiac, herz*]
+    region_head_neck:
+      label: {en: Head, brain and neck vessels, de: Kopf, Gehirn und Halsgefäße}
+      match: [head, brain, carotid, neck, kopf, gehirn, karotis, carotis]
+    region_eye:
+      label: {en: Eye, de: Auge}
+      match: [eye*, auge*]
+    region_airway:
+      label: {en: Airway, throat and lungs, de: Atemwege, Hals und Lunge}
+      match: [throat, airway, larynx, trachea, lung*, rachen, kehlkopf, lunge*]
+    region_joint:
+      label: {en: Joints and bones, de: Gelenke und Knochen}
+      match: [hip, knee, joint, bone, fracture, huefte, knie, gelenk*, fraktur*]
+    region_limb:
+      label: {en: Legs and arms, de: Extremitäten}
+      match: [leg, legs, arm, arms, foot, feet, heel, heels, ankle, ankles, toe, toes, bein, beine, fuss, fuesse,
+              ferse, knoechel, zehe*]
+    region_spine:
+      label: {en: Spine and back, de: Wirbelsäule und Rücken}
+      match: [back, spine, spinal column, disc, disk, lumbar, wirbelsaeule, ruecken*, bandscheib*, lendenwirbel*]
+    region_skin:
+      label: {en: Skin, de: Haut}
+      match: [skin, mole, naevus, nevus, rash, lesion, melanom*, haut, muttermal, ausschlag]
+    region_gi:
+      label: {en: Digestive tract, de: Verdauungstrakt}
+      match: [bowel, colon, stomach, darm, magen]
+    symptom_neuro_vision:
+      label: {en: Dizziness, vision or neurological symptoms, de: Schwindel, Sehstörung oder neurologische Symptome}
+      match: [dizziness, dizzy, vertigo, blurred vision, vision loss, visual, numbness, weakness, slurred speech, headache*, seizure*, confusion, confused, agitat*, delirium, delir*, unruhig*, schwindel*, sehstoerung*, sehverlust, laehmung, kopfschmerz*, krampfanfall, verwirrt*]
+    symptom_chest:
+      label: {en: Chest pain or shortness of breath, de: Brustschmerz oder Atemnot}
+      match: [chest pain, shortness of breath, dyspnoea, dyspnea, palpitations, breathless*, brustschmerz*, atemnot, dyspnoe, herzrasen]
+    symptom_bleeding:
+      label: {en: Bleeding, de: Blutung}
+      match: [bleeding, haemorrhage, hemorrhage, blutung*]
+    symptom_fall:
+      label: {en: Fall or trauma, de: Sturz oder Trauma}
+      match: [fall, fell, falls, trauma, injury, sturz, gestuerzt, verletzung]
+    symptom_infection:
+      label: {en: Fever or infection, de: Fieber oder Infektion}
+      match: [fever, febrile, infection, sepsis, septic, wound, fieber, infekt*, sepsis, wunde*]
+    symptom_syncope:
+      label: {en: Collapse or fainting, de: Kollaps oder Synkope}
+      match: [collapse*, syncope, syncopal, faint*, passed out, blackout, kollaps*, synkope, ohnmacht*, bewusstlos*, umgekippt]
+    symptom_pain:
+      label: {en: Pain, de: Schmerzen}
+      match: [pain, painful, ache, aching, schmerz*]
+    symptom_cough:
+      label: {en: Cough, de: Husten}
+      match: [cough*, husten, sputum, auswurf]
+      implies: {focus_lung: 0.8}
+    symptom_shock:
+      label: {en: Shock or sepsis, de: Schock oder Sepsis}
+      match: [shock, hypotension, hypotensive, schock, kreislaufversagen]
+    focus_psychiatric:
+      label: {en: Mental health, de: Psychische Erkrankung}
+      match: [depression, depressed, depressiv*, anxiety, psychosis, bipolar, schizophren*, angststoerung, suicid*, suizid*]
+    symptom_fatigue:
+      label: {en: Fatigue, de: Müdigkeit}
+      match: [tired, tiredness, fatigue, exhausted, exhaustion, lethargy, weakness, muede*, muedigkeit, erschoepf*, abgeschlagen*]
+    symptom_weight_loss:
+      label: {en: Weight loss, de: Gewichtsverlust}
+      match: [weight loss, lost weight, losing weight, gewichtsverlust, abgenommen]
+    focus_diabetes:
+      label: {en: Diabetes, de: Diabetes}
+      match: [diabetes, diabetic, diabet*, glucose, hba1c, zucker*, hypoglyc*, hypoglyk*, hyperglyc*, hyperglyk*, unterzucker*]
+    focus_hypertension:
+      label: {en: Hypertension, de: Hypertonie}
+      match: [hypertension, hypertensive, blood pressure, hypertonie, blutdruck*]
+    focus_cancer:
+      label: {en: Cancer, de: Krebs}
+      match: [cancer, carcinoma, tumour, tumor, malignan*, karzinom, krebs, tumor*]
+    focus_cardiac:
+      label: {en: Heart disease, de: Herzerkrankung}
+      match: [heart failure, coronary, arrhythmia, atrial fibrillation, afib, af, heart attack, myocardial infarction, angina, herzinsuffizienz, koronar*, vorhofflimmern, vhf, herzinfarkt, khk]
+    focus_lung:
+      label: {en: Lung disease, de: Lungenerkrankung}
+      match: [copd, asthma, emphysema, pneumonia, lungenerkrankung, pneumonie, exacerbation, exazerbation, bronchitis]
+    focus_cerebrovascular:
+      label: {en: Stroke or TIA, de: Schlaganfall oder TIA}
+      match: [tia, stroke, transient ischaemic, transient ischemic, amaurosis, schlaganfall, insult, apoplex*]
+      implies: {region_head_neck: 0.9}
+    focus_autoimmune:
+      label: {en: Autoimmune disease, de: Autoimmunerkrankung}
+      match: [lupus, sle, rheumatoid, vasculitis, autoimmun*, rheuma]
+    systemic_cancer_therapy:
+      label: {en: Chemotherapy or systemic cancer therapy, de: Chemotherapie oder systemische Tumortherapie}
+      match: [chemo, chemotherap*, immunotherap*, systemic therapy, zytostat*, chemotherapie]
+      implies: {focus_cancer: 0.9}
+    cardiotoxic_therapy:
+      label: {en: Cardiotoxic therapy, de: Kardiotoxische Therapie}
+      match: [doxorubicin, epirubicin, daunorubicin, anthracyclin*, trastuzumab]
+      implies: {systemic_cancer_therapy: 1.0}
+    immunosuppressive_therapy:
+      label: {en: Immunosuppressive therapy, de: Immunsuppressive Therapie}
+      match: [methotrexat*, mtx, azathioprin*, cyclophosphamid*, ciclosporin, tacrolimus, biologic*, immunosuppress*]
+    renal_monitoring_drug:
+      label: {en: Drug needing kidney monitoring, de: Medikament mit Nierenkontrolle}
+      match: [lithium, aminoglycosid*, gentamicin, vancomycin]
+    steroid_therapy:
+      label: {en: Steroid therapy, de: Steroidtherapie}
+      match: [steroid*, cortison*, kortison*, prednisolon*, prednison*, dexamethason*, glucocorticoid*, glukokortikoid*]
+
+  concepts:
+    anticoagulant_drug:
+      label: {en: Blood thinner named, de: Gerinnungshemmer genannt}
+      match: ["*xaban", "*gatran", "*parin", "*grel", warfarin, phenprocoumon, marcumar, eliquis, xarelto, lixiana, pradaxa, clexane, fragmin, aspirin*, ass, thrombo ass, doac, noac, doak, noak]
+      implies: {}
+    diabetes_drug:
+      label: {en: Diabetes drug named, de: Antidiabetikum genannt}
+      match: [insulin*, metformin, sglt2, "*gliflozin", "*gliptin", "*glutide", "*glinide", "*glitazon*", glp-1, exenatid*, ozempic, byetta, actos, sulfonylurea*, gliclazid*, glimepirid*, glucophage]
+      implies: {focus_diabetes: 0.9}
+    antibiotic_therapy:
+      label: {en: Antibiotic therapy, de: Antibiotikatherapie}
+      match: [antibiotic*, antibiotika*, antibiose, "*cillin", "*mycin", "*floxacin", "*cyclin", cef*, cephalospor*, vancomycin, meropenem, cotrimoxazol*]
+      implies: {symptom_infection: 0.8}
+    urinary_infection:
+      label: {en: Urinary tract infection, de: Harnwegsinfekt}
+      match: [uti, utis, urinary tract infection*, urinary infection*, cystitis, pyelonephritis, hwi, harnwegsinfekt*, zystitis]
+      implies: {symptom_infection: 1.0, region_kidney: 0.7}
+    diabetic_foot:
+      label: {en: Diabetic foot or leg ulcer, de: Diabetischer Fuß oder Ulcus}
+      match: [foot ulcer, diabetic foot, leg ulcer, ulcus cruris, diabetischer fuss, gangrene, gangraen]
+      implies: {focus_diabetes: 0.9, symptom_infection: 0.8}
+    lumbar_puncture:
+      label: {en: Lumbar puncture, de: Lumbalpunktion}
+      match: [lumbar puncture, spinal tap, lp, lumbalpunktion, liquorpunktion]
+      implies: {invasive_procedure: 1.0}
+    central_line_port:
+      label: {en: Port or central line, de: Port oder zentraler Venenkatheter}
+      match: [port, port implantation, central line, central venous catheter, picc, cvc, zvk, portimplantation, portanlage]
+      implies: {invasive_procedure: 1.0}
+    thyroid:
+      label: {en: Thyroid, de: Schilddrüse}
+      match: [thyroid*, goitre, goiter, struma, schilddruese*]
+      implies: {region_airway: 0.7}
+    anaesthesia_clinic:
+      label: {en: Pre-anaesthesia clinic, de: Anästhesie-Sprechstunde}
+      match: [anaesthesia clinic, anesthesia clinic, pre-anaesthesia, pre-anesthesia, anaesthesie sprechstunde, anaesthesiesprechstunde, anaesthesieambulanz, praemedikationsambulanz]
+      implies: {anaesthesiology: 1.0, preop: 1.0}
+    endurance_sport:
+      label: {en: Endurance sport, de: Ausdauersport}
+      match: [marathon, triathlon, endurance, competitive sport, ausdauersport, wettkampf*]
+      implies: {sports_medicine: 1.0}
+    antihypertensive_drug:
+      label: {en: Blood pressure drug named, de: Blutdruckmedikament genannt}
+      match: ["*pril", "*sartan", "*olol", "*dipine", "*dipin", diuretic*, diuretik*, furosemid*, torasemid*, hydrochlorothiazid*, hctz, spironolacton*, blopress, beta blocker*, betablocker*, ace inhibitor*, ace-hemmer]
+      implies: {}
+    nsaid_drug:
+      label: {en: Painkiller of the NSAID type, de: NSAR-Schmerzmittel}
+      match: [nsaid*, nsar, ibuprofen, diclofenac, naproxen, voltaren, metamizol*, novalgin, painkiller*, schmerzmittel*, analgesic*]
+      implies: {}
+    opioid_drug:
+      label: {en: Opioid, de: Opioid}
+      match: [opioid*, opiat*, morphin*, oxycodon*, hydromorphon*, fentanyl, tramadol, tilidin*, buprenorphin*]
+      implies: {}
+    cancer_drug:
+      label: {en: Cancer drug named, de: Krebsmedikament genannt}
+      match: ["*platin", "*taxel", "*rubicin", "*tinib", tamoxifen, letrozol*, anastrozol*, exemestan*, aromatase inhibitor*, aromatasehemmer, antihormon*, endocrine therapy, hormone therapy, capecitabin*, fluorouracil, 5-fu, pembrolizumab, nivolumab]
+      implies: {systemic_cancer_therapy: 0.9}
+    vte:
+      label: {en: Thrombosis or embolism, de: Thrombose oder Embolie}
+      match: [embolism, embolie, pulmonary embol*, lungenembolie, thrombosis, thrombose, dvt, tvt, lae, "*embolie"]
+      implies: {}
+    pad:
+      label: {en: Peripheral artery disease, de: Periphere arterielle Verschlusskrankheit}
+      match: [claudicatio*, pad, pavk, peripheral arter*, schaufensterkrankheit, angioplast*, pta]
+      implies: {region_limb: 1.0}
+    caesarean:
+      label: {en: Caesarean section, de: Kaiserschnitt}
+      match: [caesarean, cesarean, c-section, sectio, kaiserschnitt]
+      implies: {surgery_planned: 1.0, anaesthesia_planned: 1.0}
+    imaging_test:
+      label: {en: Imaging test, de: Bildgebung}
+      match: ["*graphy", "*graphie", "*grafie", ultrasound, sonograph*, x-ray, roentgen*, scan, mammo*, bildgebung]
+      implies: {}
+    lab_abnormality:
+      label: {en: Abnormal lab values, de: Auffällige Laborwerte}
+      match: ["*aemia", "*emia", "*penia", "*penic", "*aemie", "*penie", "*paenie", "*zytose", "*cytosis", enzymes, lab values, laborwerte, blood count, blutbild, anaemi*, anemia]
+      implies: {}
+    oedema:
+      label: {en: Swelling or oedema, de: Ödeme}
+      match: [oedema, edema, oedemas, swollen ankles, swollen legs, swollen feet, ankle swelling, leg swelling,
+              swelling of the legs, fluid retention, water retention, "*oedem", "*oedeme", oedeme, beinoedem*,
+              geschwollene beine, geschwollene knoechel, geschwollene fuesse, wassereinlagerung*]
+      implies: {region_limb: 0.8}
+    adverse_drug_reaction:
+      label: {en: Possible drug side effect, de: Mögliche Nebenwirkung}
+      match: [since she started, since he started, since starting, after starting, after she started, side effect*,
+              adverse effect*, adverse reaction*, drug reaction, nebenwirkung*, seit beginn, seit der einnahme,
+              unvertraeglich*]
+      implies: {}
+    structural_heart_intervention:
+      label: {en: Valve or structural heart intervention, de: Klappen- oder strukturelle Herzintervention}
+      match: [tavi, tavr, transcatheter aortic valve, mitraclip, valve replacement, valve implantation,
+              aortic stenosis, aortic valve, klappenersatz, aortenklappe*, aortenklappenstenose, herzklappe*]
+      implies: {region_heart: 1.0, contrast_planned: 0.9, invasive_procedure: 0.9}
+    pressure_ulcer:
+      label: {en: Pressure ulcer, de: Dekubitus}
+      match: [pressure ulcer*, pressure sore*, pressure injury, pressure injuries, pressure wound, bedsore*,
+              bed sore*, decubitus, dekubitus, druckgeschwuer*, druckstelle*, wundliegen]
+      implies: {region_skin: 0.8}
+    qt_prolongation:
+      label: {en: QT prolongation, de: QT-Verlängerung}
+      match: [qt, qtc, qt prolongation, long qt, prolonged qt, qt interval, torsade*, qt verlaengerung,
+              qt-zeit, verlaengerte qt]
+      implies: {}
+    gout:
+      label: {en: Gout, de: Gicht}
+      match: [gout, gouty, uric acid, hyperuricaemia, hyperuricemia, gicht, harnsaeure, hyperurikaemie]
+      implies: {}
+    electrolytes:
+      label: {en: Electrolytes, de: Elektrolyte}
+      match: [potassium, sodium, kalium, natrium, electrolyte*, elektrolyt*, magnesium, calcium, kalzium]
+      implies: {lab_abnormality: 0.9}
+    cardiac_bypass:
+      label: {en: Coronary bypass surgery, de: Bypass-Operation}
+      match: [bypass, cabg, coronary bypass, aortocoronary bypass, bypassoperation, acvb]
+      implies: {surgery_planned: 1.0, region_heart: 1.0, focus_cardiac: 1.0}
+    epistaxis:
+      label: {en: Nosebleed, de: Nasenbluten}
+      match: [nosebleed*, nose bleed*, epistaxis, nasenbluten]
+      implies: {symptom_bleeding: 1.0}
+    antidepressant:
+      label: {en: Antidepressant, de: Antidepressivum}
+      match: [ssri, snri, antidepressant*, sertraline, citalopram, escitalopram, fluoxetine, paroxetine, venlafaxine, duloxetine, mirtazapine, antidepressiv*]
+      implies: {}
+    bronchoscopy:
+      label: {en: Bronchoscopy, de: Bronchoskopie}
+      match: [bronchoscop*, bronchoskop*, ebus]
+      implies: {invasive_procedure: 1.0, region_airway: 1.0, anaesthesia_planned: 0.7}
+    endoscopy:
+      label: {en: Endoscopy, de: Endoskopie}
+      match: [colonoscop*, gastroscop*, endoscop*, ercp, koloskop*, gastroskop*, endoskop*, sigmoidoscop*]
+      implies: {invasive_procedure: 0.9, region_gi: 0.9, anaesthesia_planned: 0.7}
+    cystoscopy:
+      label: {en: Cystoscopy, de: Zystoskopie}
+      match: [cystoscop*, zystoskop*, turb, turp]
+      implies: {invasive_procedure: 0.9, region_kidney: 0.6}
+    tooth_extraction:
+      label: {en: Tooth extraction, de: Zahnextraktion}
+      match: [tooth extraction, extraction, dental implant, zahnextraktion, zahn ziehen, implantat setzen]
+      implies: {invasive_procedure: 1.0, surgery_planned: 0.7}
+    heart_catheter:
+      label: {en: Cardiac catheterisation, de: Herzkatheter}
+      match: [pci, coronary angiography, cardiac catheter*, heart catheter*, herzkatheter*, koronarangiograph*]
+      implies: {contrast_planned: 1.0, region_heart: 1.0, invasive_procedure: 1.0}
+    cataract_surgery:
+      label: {en: Cataract surgery, de: Kataraktoperation}
+      match: [cataract, katarakt*, grauer star]
+      implies: {surgery_planned: 0.9, region_eye: 1.0}
+    joint_replacement:
+      label: {en: Joint replacement, de: Gelenkersatz}
+      match: [hip replacement, knee replacement, arthroplast*, endoprothes*, tep, hueft tep, knie tep]
+      implies: {surgery_planned: 1.0, region_joint: 1.0}
+    tonsillectomy:
+      label: {en: Tonsillectomy, de: Tonsillektomie}
+      match: [tonsillectom*, tonsillektom*]
+      implies: {surgery_planned: 1.0, region_airway: 1.0}
+    endarterectomy:
+      label: {en: Carotid endarterectomy, de: Karotis-Thrombendarteriektomie}
+      match: [endarterectom*, endarteriektom*, carotid surgery, karotis op]
+      implies: {surgery_planned: 1.0, region_head_neck: 1.0}
+    laparoscopy:
+      label: {en: Laparoscopic surgery, de: Laparoskopische Operation}
+      match: [laparoscop*, laparoskop*, keyhole surgery]
+      implies: {surgery_planned: 1.0, anaesthesia_planned: 1.0, region_gi: 0.6}
+    ct_scan:
+      label: {en: CT scan, de: CT}
+      match: [ct, ct scan, computed tomography, computertomograph*]
+      implies: {}
+
+# ---------------------------------------------------------------------------
+# Rules (hyperedges). `when` lists nodes that must all be active (ancestors count).
+# ---------------------------------------------------------------------------
+rules:
+  # --- roles ---
+  - id: physician_base
+    when: [physician]
+    critical: [allergies]
+    high: [current_medication, active_problems]
+    normal: [past_problems_surgeries, recent_admissions]
+    sources: [IPS]
+
+  - id: nursing_base
+    when: [nursing]
+    critical: [allergies]
+    high: [current_medication, fall_risk_mobility, cognition_function, infection_isolation, vital_signs_latest]
+    normal: [active_problems, social_history, devices_implants]
+    sources: [IPS]
+
+  - id: pharmacy_base
+    when: [pharmacy]
+    critical: [allergies, current_medication]
+    high: [kidney_function, liver_function, anticoagulants, steroids_immunosuppressants]
+    normal: [active_problems, weight_bmi]
+    sources: [STOPP]
+
+  - id: physiotherapy_base
+    when: [physiotherapy]
+    critical: [fall_risk_mobility]
+    high: [vital_signs_latest, past_problems_surgeries, functional_capacity, cardiac_function]
+    normal: [anticoagulants, planned_procedures, active_problems, allergies]
+    sources: [IPS]
+
+  - id: perioperative_base
+    when: [perioperative]
+    critical: [anticoagulants]
+    high: [planned_procedures, coagulation_bleeding]
+    sources: [ESAIC, WHO-SSC]
+
+  - id: anaesthesiology_base
+    when: [anaesthesiology]
+    high: [previous_anaesthesia, airway_aspiration_risk, respiratory_status, cardiac_function, kidney_function]
+    normal: [weight_bmi, diabetes_control, cardiac_rhythm]
+    sources: [ESAIC]
+
+  - id: intensive_care_base
+    when: [intensive_care]
+    critical: [allergies, active_problems]
+    high: [current_medication, vital_signs_latest, respiratory_status, cardiac_function, kidney_function, coagulation_bleeding, anticoagulants, lab_results, infection_isolation]
+    normal: [advance_directives, devices_implants]
+    sources: [IPASS]
+
+  - id: surgery_base
+    when: [surgery]
+    high: [imaging_findings]
+    sources: [WHO-SSC]
+
+  - id: visceral_surgery_base
+    when: [visceral_surgery]
+    high: [imaging_findings]
+    normal: [liver_function, weight_bmi]
+    sources: [ESAIC]
+
+  - id: breast_surgery_base
+    when: [breast_surgery]
+    high: [cancer_histology, cancer_staging, tumour_receptors, tumour_board_plan]
+    sources: [ESMO-MDT]
+
+  - id: vascular_surgery_base
+    when: [vascular_surgery]
+    critical: [vascular_findings]
+    high: [kidney_function, cardiac_function, neuro_findings]
+    sources: [ESC-NCS]
+
+  - id: trauma_orthopaedics_base
+    when: [trauma_orthopaedics]
+    high: [fall_risk_mobility, imaging_findings]
+    normal: [steroids_immunosuppressants, antiresorptive_drugs]
+    sources: [ESAIC]
+
+  - id: cardiac_surgery_base
+    when: [cardiac_surgery]
+    critical: [cardiac_function]
+    high: [cardiac_rhythm, kidney_function, vascular_findings, diabetes_control]
+    normal: [functional_capacity]
+    sources: [ESC-NCS]
+
+  - id: thoracic_surgery_base
+    when: [thoracic_surgery]
+    high: [functional_capacity, imaging_findings, cardiac_function]
+    normal: [social_history]
+    sources: [ESAIC]
+
+  - id: neurosurgery_base
+    when: [neurosurgery]
+    high: [neuro_findings, imaging_findings]
+    sources: [IPS]
+
+  - id: plastic_surgery_base
+    when: [plastic_surgery]
+    normal: [social_history, diabetes_control, steroids_immunosuppressants]
+    sources: [ESAIC]
+
+  - id: urology_base
+    when: [urology]
+    high: [kidney_function, imaging_findings]
+    sources: [IPS]
+
+  - id: ent_base
+    when: [ent]
+    high: [airway_aspiration_risk]
+    sources: [ESAIC]
+
+  - id: dentistry_base
+    when: [dentistry]
+    critical: [antiresorptive_drugs]
+    high: [coagulation_bleeding]
+    normal: [steroids_immunosuppressants, diabetes_control, devices_implants]
+    note: Bisphosphonates raise the risk of jaw osteonecrosis after extractions.
+    sources: [STOPP]
+
+  - id: gynaecology_base
+    when: [gynaecology]
+    high: [pregnancy, cancer_histology, imaging_findings]
+    normal: [family_history]
+    sources: [IPS]
+
+  - id: ophthalmology_base
+    when: [ophthalmology]
+    critical: [eye_findings]
+    high: [diabetes_control, blood_pressure, vascular_findings]
+    sources: [ADA]
+
+  - id: internal_medicine_base
+    when: [internal_medicine]
+    high: [lab_results, vital_signs_latest]
+    normal: [kidney_function]
+    sources: [IPS]
+
+  - id: cardiology_base
+    when: [cardiology]
+    critical: [cardiac_function]
+    high: [cardiac_rhythm, blood_pressure, antihypertensives, anticoagulants, vascular_findings]
+    sources: [ESC-NCS]
+
+  - id: angiology_base
+    when: [angiology]
+    critical: [vascular_findings]
+    high: [anticoagulants, blood_pressure]
+    sources: [IPS]
+
+  - id: endocrinology_base
+    when: [endocrinology]
+    critical: [diabetes_control, glucose_lowering]
+    high: [weight_bmi, kidney_function, eye_findings, current_medication]
+    sources: [ADA]
+
+  - id: nephrology_base
+    when: [nephrology]
+    critical: [kidney_function]
+    high: [contrast_relevant_meds, blood_pressure, antihypertensives, current_medication]
+    normal: [diabetes_control]
+    sources: [ESUR, STOPP]
+
+  - id: gastroenterology_base
+    when: [gastroenterology]
+    critical: [liver_function]
+    high: [coagulation_bleeding, imaging_findings, anticoagulants]
+    sources: [IPS]
+
+  - id: oncology_base
+    when: [oncology]
+    critical: [cancer_histology, cancer_staging]
+    high: [tumour_receptors, tumour_board_plan, cognition_function, planned_procedures]
+    normal: [family_history]
+    sources: [ESMO-MDT]
+
+  - id: pulmonology_base
+    when: [pulmonology]
+    critical: [respiratory_status]
+    high: [active_problems, current_medication, vital_signs_latest]
+    normal: [social_history, cardiac_function, imaging_findings]
+    sources: [IPS]
+
+  - id: rheumatology_base
+    when: [rheumatology]
+    critical: [steroids_immunosuppressants]
+    high: [kidney_function, lab_results, active_problems, current_medication]
+    sources: [IPS]
+
+  - id: infectiology_base
+    when: [infectiology]
+    critical: [infection_isolation]
+    high: [allergies, lab_results, devices_implants, vital_signs_latest]
+    sources: [IPS]
+
+  - id: geriatrics_base
+    when: [geriatrics]
+    critical: [current_medication]
+    high: [fall_risk_mobility, cognition_function, kidney_function, anticoagulants]
+    normal: [social_history, advance_directives, weight_bmi]
+    sources: [STOPP]
+
+  - id: emergency_medicine_base
+    when: [emergency_medicine]
+    critical: [anticoagulants]
+    high: [prior_similar_events, vital_signs_latest, active_problems]
+    normal: [recent_admissions]
+    sources: [SAMPLE]
+
+  - id: general_practice_base
+    when: [general_practice]
+    high: [followups_recommended, blood_pressure, weight_bmi]
+    normal: [vital_signs_latest, social_history, family_history]
+    sources: [IPS, IPASS]
+
+  - id: radiology_base
+    when: [radiology]
+    critical: [contrast_reaction]
+    high: [kidney_function, contrast_relevant_meds, devices_implants, imaging_findings]
+    normal: [pregnancy]
+    sources: [ESUR]
+
+  - id: nuclear_medicine_base
+    when: [nuclear_medicine]
+    high: [pregnancy, kidney_function, imaging_findings]
+    normal: [current_medication]
+    sources: [IPS]
+
+  - id: radiation_oncology_base
+    when: [radiation_oncology]
+    critical: [cancer_histology, cancer_staging]
+    high: [devices_implants, tumour_board_plan, planned_procedures]
+    normal: [pregnancy]
+    sources: [ESMO-MDT]
+
+  - id: neurology_base
+    when: [neurology]
+    critical: [neuro_findings]
+    high: [vascular_findings, anticoagulants, prior_similar_events]
+    sources: [IPS]
+
+  - id: psychiatry_base
+    when: [psychiatry]
+    high: [current_medication, cognition_function]
+    normal: [social_history]
+    sources: [STOPP]
+
+  - id: dermatology_base
+    when: [dermatology]
+    high: [current_medication, allergies]
+    normal: [steroids_immunosuppressants]
+    sources: [IPS]
+
+  - id: paediatrics_base
+    when: [paediatrics]
+    high: [weight_bmi, allergies]
+    sources: [IPS]
+
+  - id: occupational_medicine_base
+    when: [occupational_medicine]
+    high: [current_medication, active_problems, functional_capacity]
+    normal: [diabetes_control, cognition_function, social_history]
+    sources: [IPS]
+
+  - id: sports_medicine_base
+    when: [sports_medicine]
+    critical: [cardiac_function]
+    high: [cardiac_rhythm, blood_pressure, current_medication, functional_capacity]
+    normal: [family_history]
+    sources: [ESC-NCS]
+
+  - id: palliative_care_base
+    when: [palliative_care]
+    critical: [current_medication, advance_directives]
+    high: [active_problems, social_history, cognition_function]
+    normal: [kidney_function]
+    sources: [IPS, STOPP]
+
+  - id: midwifery_base
+    when: [midwifery]
+    critical: [pregnancy, allergies]
+    high: [current_medication]
+    normal: [blood_pressure, diabetes_control]
+    sources: [IPS]
+
+  - id: rehabilitation_base
+    when: [rehabilitation]
+    high: [fall_risk_mobility, functional_capacity, cognition_function]
+    sources: [IPS]
+
+  # --- tasks ---
+  - id: preop_task
+    when: [preop]
+    critical: [allergies, anticoagulants, cardiac_function]
+    high: [current_medication, previous_anaesthesia, airway_aspiration_risk, respiratory_status, functional_capacity, kidney_function, coagulation_bleeding, diabetes_control, planned_procedures]
+    normal: [weight_bmi, steroids_immunosuppressants, devices_implants, fasting_last_intake]
+    sources: [ESAIC, ESC-NCS, WHO-SSC]
+
+  - id: surgery_planning_task
+    when: [surgery_planning]
+    critical: [planned_procedures]
+    high: [imaging_findings, anticoagulants]
+    sources: [WHO-SSC]
+
+  - id: tumour_board_task
+    when: [tumour_board]
+    critical: [cancer_histology, cancer_staging, tumour_receptors, tumour_board_plan]
+    high: [imaging_findings, planned_procedures, cognition_function]
+    normal: [family_history]
+    sources: [ESMO-MDT]
+
+  - id: emergency_task
+    when: [emergency]
+    critical: [allergies, anticoagulants]
+    high: [current_medication, active_problems, prior_similar_events, vital_signs_latest]
+    normal: [recent_admissions, fasting_last_intake]
+    sources: [SAMPLE]
+
+  - id: admission_task
+    when: [admission]
+    critical: [allergies, current_medication]
+    high: [active_problems, vital_signs_latest]
+    normal: [recent_admissions, infection_isolation, past_problems_surgeries]
+    sources: [IPASS, IPS]
+
+  - id: chronic_review_task
+    when: [chronic_review]
+    high: [current_medication, followups_recommended]
+    normal: [lab_results, vital_signs_latest]
+    sources: [ADA]
+
+  - id: followup_review_task
+    when: [followup_review]
+    critical: [followups_recommended, followups_completed]
+    high: [recent_admissions, planned_procedures]
+    normal: [imaging_findings, vascular_findings]
+    sources: [IPASS]
+
+  - id: medication_review_task
+    when: [medication_review]
+    critical: [current_medication]
+    high: [allergies, kidney_function, liver_function, anticoagulants]
+    normal: [steroids_immunosuppressants, weight_bmi]
+    sources: [STOPP]
+
+  - id: handover_task
+    when: [handover]
+    critical: [active_problems]
+    high: [current_medication, allergies, followups_recommended, planned_procedures]
+    sources: [IPASS]
+
+  # --- context ---
+  - id: surgery_context
+    when: [surgery_planned]
+    high: [anticoagulants, coagulation_bleeding, planned_procedures]
+    sources: [ESAIC, WHO-SSC]
+
+  - id: anaesthesia_context
+    when: [anaesthesia_planned]
+    high: [previous_anaesthesia, airway_aspiration_risk, allergies]
+    normal: [fasting_last_intake]
+    sources: [ESAIC]
+
+  - id: neuraxial_context
+    when: [neuraxial_anaesthesia]
+    critical: [anticoagulants, coagulation_bleeding]
+    sources: [ESAIC]
+
+  - id: invasive_context
+    when: [invasive_procedure]
+    critical: [anticoagulants]
+    high: [coagulation_bleeding, allergies]
+    sources: [ESAIC]
+
+  - id: postop_context
+    when: [postop]
+    high: [past_problems_surgeries, vital_signs_latest, current_medication, anticoagulants]
+    normal: [infection_isolation]
+    sources: [IPASS]
+
+  - id: contrast_context
+    when: [contrast_planned]
+    critical: [contrast_reaction, kidney_function, contrast_relevant_meds]
+    high: [allergies, glucose_lowering]
+    normal: [pregnancy]
+    sources: [ESUR]
+
+  - id: mri_context
+    when: [mri_planned]
+    critical: [devices_implants]
+    normal: [kidney_function, pregnancy]
+    sources: [IPS]
+
+  - id: ct_context
+    when: [ct_scan]
+    normal: [pregnancy, kidney_function]
+    sources: [ESUR]
+
+  - id: radiotherapy_context
+    when: [radiotherapy_planned]
+    high: [devices_implants]
+    normal: [pregnancy]
+    sources: [ESMO-MDT]
+
+  - id: breast_context
+    when: [region_breast]
+    normal: [imaging_findings, planned_procedures, cancer_histology, cancer_staging]
+    sources: [ESMO-MDT]
+
+  - id: liver_context
+    when: [region_liver]
+    critical: [liver_function]
+    high: [coagulation_bleeding]
+    sources: [ESAIC]
+
+  - id: kidney_context
+    when: [region_kidney]
+    critical: [kidney_function]
+    sources: [IPS]
+
+  - id: heart_context
+    when: [region_heart]
+    critical: [cardiac_function]
+    high: [cardiac_rhythm]
+    sources: [ESC-NCS]
+
+  - id: head_neck_context
+    when: [region_head_neck]
+    high: [neuro_findings, vascular_findings]
+    sources: [IPS]
+
+  - id: eye_context
+    when: [region_eye]
+    high: [eye_findings]
+    sources: [IPS]
+
+  - id: airway_context
+    when: [region_airway]
+    high: [airway_aspiration_risk]
+    sources: [ESAIC]
+
+  - id: joint_context
+    when: [region_joint]
+    high: [anticoagulants]
+    normal: [fall_risk_mobility, devices_implants, antiresorptive_drugs]
+    sources: [ESAIC]
+
+  - id: neuro_vision_symptoms
+    when: [symptom_neuro_vision]
+    critical: [prior_similar_events]
+    high: [neuro_findings, vascular_findings, eye_findings, blood_pressure, antihypertensives, anticoagulants]
+    sources: [SAMPLE]
+
+  - id: chest_symptoms
+    when: [symptom_chest]
+    critical: [cardiac_function]
+    high: [cardiac_rhythm, respiratory_status, prior_similar_events, anticoagulants, blood_pressure]
+    sources: [SAMPLE, ESC-NCS]
+
+  - id: bleeding_symptoms
+    when: [symptom_bleeding]
+    critical: [anticoagulants, coagulation_bleeding]
+    high: [prior_similar_events]
+    sources: [SAMPLE]
+
+  - id: fall_symptoms
+    when: [symptom_fall]
+    critical: [anticoagulants]
+    high: [fall_risk_mobility, prior_similar_events, imaging_findings]
+    sources: [SAMPLE]
+
+  - id: infection_symptoms
+    when: [symptom_infection]
+    critical: [vital_signs_latest]
+    high: [infection_isolation, allergies, current_medication, lab_results]
+    normal: [past_problems_surgeries, devices_implants, diabetes_control, kidney_function]
+    sources: [SAMPLE]
+
+  - id: antihypertensive_drug_context
+    when: [antihypertensive_drug]
+    critical: [antihypertensives]
+    high: [blood_pressure, kidney_function]
+    sources: [STOPP]
+
+  - id: nsaid_context
+    when: [nsaid_drug]
+    critical: [kidney_function, current_medication]
+    high: [anticoagulants, allergies, antihypertensives]
+    note: NSAIDs harm the kidneys, add to bleeding risk and weaken blood pressure drugs.
+    sources: [STOPP]
+
+  - id: opioid_context
+    when: [opioid_drug]
+    critical: [current_medication]
+    high: [fall_risk_mobility, cognition_function, kidney_function]
+    sources: [STOPP]
+
+  - id: cancer_drug_context
+    when: [cancer_drug]
+    high: [tumour_receptors, current_medication]
+    sources: [ESMO-MDT]
+
+  - id: vte_context
+    when: [vte]
+    critical: [anticoagulants]
+    high: [kidney_function, contrast_reaction, prior_similar_events, coagulation_bleeding, cardiac_function]
+    note: Suspected embolism usually means CT angiography and anticoagulation.
+    sources: [ESC-NCS, ESUR]
+
+  - id: pad_context
+    when: [pad]
+    critical: [vascular_findings]
+    high: [anticoagulants, diabetes_control, kidney_function, contrast_reaction]
+    sources: [ESC-NCS, ESUR]
+
+  - id: caesarean_context
+    when: [caesarean]
+    critical: [pregnancy, allergies, anticoagulants]
+    high: [fasting_last_intake, coagulation_bleeding, airway_aspiration_risk]
+    sources: [ESAIC, WHO-SSC]
+
+  - id: imaging_test_context
+    when: [imaging_test]
+    high: [imaging_findings]
+    normal: [pregnancy]
+    sources: [IPS]
+
+  - id: lab_abnormality_context
+    when: [lab_abnormality]
+    critical: [lab_results]
+    high: [current_medication, active_problems]
+    sources: [IPS]
+
+  - id: limb_context
+    when: [region_limb]
+    high: [vascular_findings]
+    normal: [diabetes_control]
+    sources: [IPS]
+
+  - id: spine_context
+    when: [region_spine]
+    high: [imaging_findings]
+    normal: [antiresorptive_drugs, fall_risk_mobility]
+    sources: [IPS]
+
+  - id: skin_context
+    when: [region_skin]
+    high: [allergies, current_medication]
+    normal: [steroids_immunosuppressants]
+    sources: [IPS]
+
+  - id: pain_symptoms
+    when: [symptom_pain]
+    high: [current_medication, allergies]
+    normal: [kidney_function, anticoagulants]
+    sources: [SAMPLE]
+
+  - id: cough_symptoms
+    when: [symptom_cough]
+    high: [vital_signs_latest, current_medication]
+    normal: [social_history, antihypertensives]
+    note: ACE inhibitors cause cough.
+    sources: [SAMPLE]
+
+  - id: shock_symptoms
+    when: [symptom_shock]
+    critical: [vital_signs_latest, allergies]
+    high: [cardiac_function, kidney_function, lab_results, infection_isolation, anticoagulants, current_medication]
+    sources: [SAMPLE]
+
+  - id: psychiatric_focus
+    when: [focus_psychiatric]
+    high: [current_medication, cognition_function]
+    normal: [social_history]
+    sources: [STOPP]
+
+  - id: oedema_context
+    when: [oedema]
+    high: [cardiac_function, kidney_function, current_medication]
+    normal: [liver_function, lab_results, vascular_findings, weight_bmi]
+    note: Leg swelling - heart, kidney, liver, drugs (amlodipine, NSAIDs, glitazones) or a clot.
+    sources: [SAMPLE, STOPP]
+
+  - id: adverse_drug_reaction_context
+    when: [adverse_drug_reaction]
+    critical: [current_medication]
+    high: [allergies, kidney_function, liver_function]
+    sources: [STOPP]
+
+  - id: structural_heart_context
+    when: [structural_heart_intervention]
+    critical: [cardiac_function]
+    high: [kidney_function, vascular_findings, contrast_reaction, anticoagulants, cardiac_rhythm]
+    normal: [functional_capacity, cognition_function]
+    note: TAVI work-up includes CT angiography with contrast and an arterial access check.
+    sources: [ESC-NCS, ESUR]
+
+  - id: pressure_ulcer_context
+    when: [pressure_ulcer]
+    critical: [fall_risk_mobility]
+    high: [diabetes_control, vascular_findings, infection_isolation, weight_bmi]
+    normal: [lab_results, cognition_function, social_history]
+    note: Healing depends on mobility, nutrition, blood sugar and blood supply.
+    sources: [IPS]
+
+  - id: qt_prolongation_context
+    when: [qt_prolongation]
+    critical: [cardiac_rhythm, current_medication]
+    high: [lab_results, cardiac_function]
+    note: QT-prolonging drugs, low potassium or magnesium, structural heart disease.
+    sources: [STOPP, ESC-NCS]
+
+  - id: gout_context
+    when: [gout]
+    high: [kidney_function, current_medication]
+    normal: [lab_results, cardiac_function]
+    sources: [STOPP]
+
+  - id: electrolytes_context
+    when: [electrolytes]
+    critical: [lab_results]
+    high: [kidney_function, current_medication, cardiac_rhythm]
+    sources: [IPS]
+
+  - id: syncope_symptoms
+    when: [symptom_syncope]
+    critical: [cardiac_rhythm, prior_similar_events]
+    high: [cardiac_function, blood_pressure, antihypertensives, anticoagulants, current_medication]
+    normal: [diabetes_control, neuro_findings, recent_admissions]
+    note: Collapse is cardiac until proven otherwise (rhythm, structural heart disease, drugs).
+    sources: [ESC-NCS, SAMPLE]
+
+  - id: epistaxis_context
+    when: [epistaxis]
+    high: [blood_pressure, antihypertensives]
+    sources: [SAMPLE]
+
+  - id: antidepressant_context
+    when: [antidepressant]
+    critical: [current_medication]
+    high: [anticoagulants]
+    normal: [cardiac_rhythm]
+    note: SSRIs raise the bleeding risk with blood thinners; some prolong the QT interval.
+    sources: [STOPP]
+
+  - id: fatigue_symptoms
+    when: [symptom_fatigue]
+    critical: [lab_results]
+    high: [diabetes_control, current_medication, active_problems]
+    normal: [weight_bmi, vital_signs_latest, cardiac_function, kidney_function]
+    sources: [IPS]
+
+  - id: anticoagulant_drug_context
+    when: [anticoagulant_drug]
+    critical: [anticoagulants]
+    high: [kidney_function, coagulation_bleeding, current_medication]
+    sources: [ESC-NCS, STOPP]
+
+  - id: antibiotic_context
+    when: [antibiotic_therapy]
+    critical: [allergies]
+    high: [kidney_function, current_medication]
+    sources: [STOPP]
+
+  - id: diabetic_foot_context
+    when: [diabetic_foot]
+    high: [vascular_findings, infection_isolation]
+    sources: [ADA]
+
+  - id: lumbar_puncture_context
+    when: [lumbar_puncture]
+    high: [imaging_findings, neuro_findings]
+    note: Brain imaging and blood thinners are checked before a lumbar puncture.
+    sources: [ESAIC]
+
+  - id: port_context
+    when: [central_line_port]
+    high: [devices_implants]
+    normal: [contrast_reaction]
+    sources: [IPS]
+
+  - id: thyroid_context
+    when: [thyroid]
+    normal: [lab_results]
+    sources: [IPS]
+
+  - id: weight_loss_symptoms
+    when: [symptom_weight_loss]
+    critical: [weight_bmi]
+    high: [active_problems, lab_results]
+    normal: [diabetes_control]
+    sources: [IPS]
+
+  - id: diabetes_focus
+    when: [focus_diabetes]
+    critical: [diabetes_control, glucose_lowering]
+    high: [weight_bmi, kidney_function]
+    normal: [eye_findings, blood_pressure]
+    sources: [ADA]
+
+  - id: hypertension_focus
+    when: [focus_hypertension]
+    critical: [blood_pressure, antihypertensives]
+    high: [kidney_function, cardiac_function]
+    sources: [IPS]
+
+  - id: cancer_focus
+    when: [focus_cancer]
+    high: [cancer_histology, cancer_staging]
+    normal: [tumour_receptors, tumour_board_plan]
+    sources: [ESMO-MDT]
+
+  - id: cardiac_focus
+    when: [focus_cardiac]
+    critical: [cardiac_function]
+    high: [cardiac_rhythm, antihypertensives, anticoagulants]
+    sources: [ESC-NCS]
+
+  - id: lung_focus
+    when: [focus_lung]
+    critical: [respiratory_status]
+    high: [active_problems, current_medication, vital_signs_latest]
+    normal: [steroids_immunosuppressants, social_history, imaging_findings]
+    sources: [IPS]
+
+  - id: cerebrovascular_focus
+    when: [focus_cerebrovascular]
+    critical: [neuro_findings, vascular_findings]
+    high: [anticoagulants, blood_pressure, prior_similar_events]
+    sources: [IPS]
+
+  - id: autoimmune_focus
+    when: [focus_autoimmune]
+    critical: [steroids_immunosuppressants]
+    high: [kidney_function, lab_results, active_problems]
+    sources: [IPS]
+
+  - id: systemic_cancer_therapy_context
+    when: [systemic_cancer_therapy]
+    critical: [cancer_histology, cancer_staging]
+    high: [kidney_function, liver_function, allergies, lab_results, tumour_receptors]
+    normal: [cognition_function, devices_implants]
+    sources: [ESMO-MDT]
+
+  - id: cardiotoxic_therapy_context
+    when: [cardiotoxic_therapy]
+    critical: [cardiac_function]
+    high: [cardiac_rhythm]
+    sources: [ESC-NCS]
+
+  - id: immunosuppressive_therapy_context
+    when: [immunosuppressive_therapy]
+    critical: [liver_function, kidney_function]
+    high: [current_medication, steroids_immunosuppressants, infection_isolation, lab_results]
+    normal: [pregnancy]
+    sources: [STOPP]
+
+  - id: renal_monitoring_context
+    when: [renal_monitoring_drug]
+    critical: [kidney_function, current_medication]
+    high: [lab_results]
+    sources: [STOPP]
+
+  - id: steroid_therapy_context
+    when: [steroid_therapy]
+    critical: [steroids_immunosuppressants]
+    high: [diabetes_control, current_medication]
+    normal: [glucose_lowering, infection_isolation, blood_pressure]
+    sources: [STOPP]
+
+  # --- combinations (more specific, so they override the rules above) ---
+  - id: anaesthesia_preop
+    when: [anaesthesiology, preop]
+    critical: [airway_aspiration_risk, previous_anaesthesia]
+    suppress: [tumour_receptors, tumour_board_plan, family_history, imaging_findings]
+    note: Tumour biology does not change the anaesthetic plan (challenge README example).
+    sources: [ESAIC, WHO-SSC]
+
+  - id: anaesthesia_breast
+    when: [anaesthesiology, region_breast]
+    normal: [cancer_histology, cancer_staging]
+    suppress: [tumour_receptors]
+    sources: [ESAIC]
+
+  - id: anaesthesia_neuraxial
+    when: [anaesthesiology, neuraxial_anaesthesia]
+    critical: [anticoagulants, coagulation_bleeding]
+    high: [previous_anaesthesia]
+    sources: [ESAIC]
+
+  - id: surgery_tumour_board
+    when: [surgery, tumour_board]
+    critical: [cancer_histology, cancer_staging, tumour_receptors, tumour_board_plan, planned_procedures]
+    sources: [ESMO-MDT]
+
+  - id: surgery_planning_cancer
+    when: [surgery, surgery_planning, focus_cancer]
+    critical: [cancer_histology, cancer_staging, tumour_receptors, tumour_board_plan]
+    sources: [ESMO-MDT]
+
+  - id: emergency_neuro
+    when: [emergency, symptom_neuro_vision]
+    critical: [prior_similar_events, anticoagulants]
+    high: [contrast_reaction, kidney_function, contrast_relevant_meds, antihypertensives]
+    note: Acute neurological symptoms usually lead to CT angiography with iodinated contrast.
+    sources: [SAMPLE, ESUR]
+
+  - id: emergency_medicine_neuro
+    when: [emergency_medicine, symptom_neuro_vision]
+    critical: [prior_similar_events, anticoagulants]
+    high: [contrast_reaction, kidney_function, contrast_relevant_meds, antihypertensives]
+    sources: [SAMPLE, ESUR]
+
+  - id: emergency_chest
+    when: [emergency_medicine, symptom_chest]
+    high: [contrast_reaction, kidney_function]
+    note: Acute chest pain may lead to CT angiography or coronary angiography.
+    sources: [ESC-NCS, ESUR]
+
+  - id: gp_chronic_diabetes
+    when: [general_practice, chronic_review, focus_diabetes]
+    critical: [diabetes_control, glucose_lowering, weight_bmi]
+    high: [kidney_function, blood_pressure, eye_findings]
+    sources: [ADA]
+
+  - id: gp_followup
+    when: [general_practice, followup_review]
+    critical: [followups_recommended, followups_completed]
+    high: [vascular_findings, imaging_findings, eye_findings, blood_pressure]
+    sources: [IPASS]
+
+  - id: plastic_surgery_breast
+    when: [plastic_surgery, region_breast]
+    high: [cancer_histology, imaging_findings]
+    sources: [ESMO-MDT]
+
+  - id: dentistry_invasive
+    when: [dentistry, invasive_procedure]
+    critical: [anticoagulants, antiresorptive_drugs]
+    high: [coagulation_bleeding]
+    sources: [STOPP]
+
+# ---------------------------------------------------------------------------
+# Item links: [from, to, weight]. If `from` is on the checklist with score s,
+# `to` gets s x weight (one hop, never above its own rule score, never if suppressed).
+# ---------------------------------------------------------------------------
+links:
+  - [anticoagulants, coagulation_bleeding, 0.7]
+  - [coagulation_bleeding, anticoagulants, 0.7]
+  - [contrast_reaction, allergies, 0.9]
+  - [diabetes_control, glucose_lowering, 0.85]
+  - [glucose_lowering, diabetes_control, 0.85]
+  - [glucose_lowering, contrast_relevant_meds, 0.6]
+  - [blood_pressure, antihypertensives, 0.8]
+  - [antihypertensives, blood_pressure, 0.8]
+  - [cancer_histology, cancer_staging, 0.95]
+  - [cancer_staging, cancer_histology, 0.95]
+  - [cardiac_function, cardiac_rhythm, 0.6]
+  - [followups_recommended, followups_completed, 0.9]
+  - [airway_aspiration_risk, weight_bmi, 0.6]
+  - [fall_risk_mobility, anticoagulants, 0.7]
+  - [steroids_immunosuppressants, diabetes_control, 0.6]
+  - [prior_similar_events, recent_admissions, 0.7]
+  - [vascular_findings, neuro_findings, 0.6]
+  - [neuro_findings, vascular_findings, 0.6]
+  - [kidney_function, contrast_relevant_meds, 0.5]

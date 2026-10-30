@@ -1,0 +1,14 @@
+{
+  "metadata": {
+    "id": "9999000301",
+    "title": "Stat. Patientenbrief (Interne)",
+    "version": "1",
+    "date": "2024-05-10",
+    "type": "Arztbrief(Inter.)",
+    "group": "Befund",
+    "division": "Innere Medizin",
+    "hospital": "Testklinikum Süd",
+    "department": "Orthopädie"
+  },
+  "text": "Patient(in): NN_9999-0003<BR>Diagnosen:<BR>Vorhofflimmern, paroxysmal<BR>Chronische Niereninsuffizienz Stadium G3a<BR>Gonarthrose rechts<BR>Allergien: Penicillin (Urtikaria)<BR>Verlauf:<BR>Kardioversion nicht erforderlich, Frequenzkontrolle mit Bisoprolol.<BR>Medikation bei Entlassung:<BR>Eliquis 5mg oral 1 0 1 0 ST<BR>Bisoprolol 2,5mg oral 1 0 0 0 ST<BR>Pantoloc 40mg oral 1 0 0 0 ST<BR>Empfehlungen:<BR>Orthopädische Vorstellung zur Planung einer Knie-TEP rechts."
+}

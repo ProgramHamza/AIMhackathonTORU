@@ -185,15 +185,20 @@ def build() -> str:
     parts.append("""<section><h2>What the comparison shows</h2><ul class="caveat">
 <li><b>Our system answers all 15 questions correctly, and never invents.</b> No partial, missing or wrong answers; its screens
 contain no number that is absent from the cited document, and every quote is found word for word.</li>
-<li><b>The one-call LLM baseline misses most of what a task needs</b> (needed topics addressed about a fifth of the time on unseen
-prompts), paraphrases about 1 quote in 8, and finds two contradictions plus one false alarm, although it sees the whole record.</li>
+<li><b>The one-call LLM baseline misses most of what a task needs</b> (needed topics addressed about a third of the time on unseen
+prompts), paraphrases about 1 quote in 25, and finds one contradiction plus one false alarm, although it sees the whole record.
+Its results vary from run to run: across the three runs it found 1 to 2 contradictions and 22 to 33% of needed topics.</li>
 <li><b>The rules baseline is instant and always traceable</b>, but it misses half of the needed topics, cannot say "not documented"
 reliably and finds no contradictions.</li>
 <li><b>Our system with and without the LLM score the same here.</b> The decision graph, the remarker and the verified facts do the
 work the judge measures; the LLM orders the list and writes the summary panel. It costs about 1.6 s and 2 calls.</li>
+<li><b>Keywords cost two blind topics</b> (run 3, section 5): the judge marked imaging findings for C10 and bleeding history for
+C15 as no longer addressed (107 of 109 needed topics, 98%). For C10 the screen shows the same passages as in run 2; for C15 the
+shortened line keeps the antiplatelet drug but loses the sentence around it. Every source is still one click away, with the
+keyword's words highlighted.</li>
 <li><b>The 5 partial answers of the first run are fixed</b> (section 5): the search had found every needed passage, but the summary
 line showed too few of them. The fix changed only which found passages are quoted; the graph and the search are unchanged.</li>
-<li><b>15 of 15 is on questions the team also used while building.</b> The blind prompts (needed topics 100%) are the fairer test of
+<li><b>15 of 15 is on questions the team also used while building.</b> The blind prompts (needed topics 98%) are the fairer test of
 generalisation; a new patient record would be the real one.</li>
 <li><b>Data sent to the cloud:</b> our two parallel calls both carry the selected passages, and the summary call repeats them in its
 template lines, so a request sends more characters than the whole record. It is de-identified either way; removing the repetition

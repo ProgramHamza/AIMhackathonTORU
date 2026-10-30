@@ -81,7 +81,8 @@ CONTEXTUAL_ITEMS = {"prior_similar_events", "imaging_findings", "neuro_findings"
 COMPLETES = {"followups_completed": "followups_recommended"}
 # derived values from blocks 1-4 -> the checklist items they answer
 DERIVED_ITEMS = {"body_weight_change": ["weight_bmi"], "body_mass_index": ["weight_bmi"]}
-NOT_EVIDENCE = {"followups_completed": {"planned", "uncertain"}}
+NOT_EVIDENCE = {"followups_completed": {"planned", "uncertain"},
+                "previous_anaesthesia": {"planned", "uncertain"}}
 
 NEG_PRE = {"kein", "keine", "keinen", "keiner", "keinem", "keines", "ohne", "nicht", "weder",
            "no", "not", "without", "negative for"}
@@ -298,7 +299,8 @@ class RemarkerIndex:
                     sg.codes.add(code)
 
         # near-duplicates and contradiction candidates
-        contradictions = _near_duplicates(segs) + _allergy_conflicts(segs)
+        contradictions = _near_duplicates(segs)
+        contradictions += _side_conflicts(segs, contradictions) + _allergy_conflicts(segs)
 
         # lexical: one automaton over all item terms
         items = tree.items
@@ -549,6 +551,43 @@ def _near_duplicates(segs: list[_Seg]) -> list[ContradictionCandidate]:
                 parent[find(a)] = find(b)  # same passage, nothing differs that matters
     for k in idx:
         segs[k].group = find(k)
+    return out
+
+
+SIDE_CORE_STOP = {"diagnose", "diagnosen", "dg", "st", "p", "z", "n", "v", "a", "bei", "mit", "und", "der", "die", "das"}
+
+
+def _side_conflicts(segs: list[_Seg], known: list[ContradictionCandidate]) -> list[ContradictionCandidate]:
+    """The same short finding with opposite sides in two documents ("Gonarthrose rechts" vs "links").
+
+    The near-duplicate detector needs five shared words, so diagnosis-list lines never reach it.
+    Here the words other than the side must be identical and contain a real term (6+ letters).
+    """
+    side_words = {w: s for s, ws in SIDES.items() for w in ws}
+    by_core: dict[frozenset, list[tuple[str, _Seg]]] = {}
+    for sg in segs:
+        if sg.seg.kind not in SCORED_KINDS:
+            continue
+        words = set(normalize(f"{sg.seg.label} {sg.seg.text}").split())
+        sides = {side_words[w] for w in words if w in side_words} - {"both"}
+        core = frozenset(w for w in words if w not in side_words and w not in SIDE_CORE_STOP
+                         and not re.fullmatch(r"[\d.,]+", w))
+        if len(sides) != 1 or not core or len(core) > 4 or not any(len(w) >= 6 for w in core):
+            continue
+        by_core.setdefault(core, []).append((next(iter(sides)), sg))
+    done = {tuple(sorted(c.doc_ids)) for c in known if c.kind == "laterality"}
+    out = []
+    for core, entries in by_core.items():
+        for n, (side_a, a) in enumerate(entries):
+            for side_b, b in entries[n + 1:]:
+                pair = tuple(sorted((a.seg.doc_id, b.seg.doc_id)))
+                if side_a == side_b or a.seg.doc_id == b.seg.doc_id or pair in done:
+                    continue
+                done.add(pair)
+                diff = sorted(w for w in set(a.norm.split()) ^ set(b.norm.split()) if w in side_words)
+                out.append(ContradictionCandidate(
+                    segment_ids=[a.seg.segment_id, b.seg.segment_id], doc_ids=[a.seg.doc_id, b.seg.doc_id],
+                    differing=diff, kind="laterality"))
     return out
 
 
@@ -864,7 +903,8 @@ class Remarker:
         excluded = NOT_EVIDENCE.get(item_id, set())
         evidence = [f for f in flags if f.polarity not in excluded]
         if time_rule in ("current", "latest"):
-            positive = [f for f in evidence if f.polarity in ("affirmed", "past", "planned")]
+            held = [f for f in evidence if f.polarity in ("affirmed", "past")]
+            positive = held or [f for f in evidence if f.polarity == "planned"]
             newest = max((f.doc_date for f in positive if f.doc_date), default=None)
             if newest:
                 for f in evidence:

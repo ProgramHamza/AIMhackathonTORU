@@ -1,0 +1,14 @@
+{
+  "metadata": {
+    "id": "9999000302",
+    "title": "Ambulanter Patientenbrief",
+    "version": "1",
+    "date": "2024-09-02",
+    "type": "Ambulanzbrief(Inter.)",
+    "group": "Befund",
+    "division": "Innere Medizin",
+    "hospital": "Testklinikum Süd",
+    "department": "Orthopädie"
+  },
+  "text": "Orthopädische Ambulanz<BR>Allergien: keine bekannt<BR>Diagnose: Gonarthrose links<BR>Procedere:<BR>Knie-TEP geplant am 14.10.2024.<BR>Pausieren der Antikoagulation nach Rücksprache mit der Anästhesie.<BR>Präoperative Vorstellung in der Anästhesieambulanz am 30.09.2024."
+}
