@@ -260,7 +260,7 @@ class RemarkerIndex:
     # --- build -------------------------------------------------------------------
     @classmethod
     def build(cls, patient_dir: Path, tree: DecisionTree, embedder: GeminiEmbedder | None = None,
-              reranker: JinaReranker | None = None) -> "RemarkerIndex":
+              reranker: JinaReranker | None = None, wait_on_quota: bool = True) -> "RemarkerIndex":
         t0 = time.perf_counter()
         info: dict = {"issues": []}
         patient = json.loads((patient_dir / "patient.json").read_text(encoding="utf-8"))
@@ -376,9 +376,9 @@ class RemarkerIndex:
         if embedder is not None:
             try:
                 seg_texts = [_embed_text(docs[sg.seg.doc_id]["title"], sg.seg) for sg in segs]
-                seg_vectors = embedder.embed(seg_texts, "RETRIEVAL_DOCUMENT", wait_on_quota=True)
+                seg_vectors = embedder.embed(seg_texts, "RETRIEVAL_DOCUMENT", wait_on_quota=wait_on_quota)
                 item_vectors = embedder.embed([_item_text(it) for it in items], "RETRIEVAL_QUERY",
-                                               wait_on_quota=True)
+                                               wait_on_quota=wait_on_quota)
                 cos = item_vectors @ seg_vectors.T
                 vals = cos[:, scored].ravel()
                 lo, hi = float(np.percentile(vals, DENSE_LOW_PCT)), float(np.percentile(vals, DENSE_HIGH_PCT))
@@ -646,9 +646,12 @@ class Remarker:
 
     @classmethod
     def for_patient(cls, patient_dir: Path, tree: DecisionTree | None = None, dense: bool = True,
-                    rerank: bool = False, rebuild: bool = False, evidence=True) -> "Remarker":
+                    rerank: bool = False, rebuild: bool = False, evidence=True,
+                    wait_on_quota: bool = True) -> "Remarker":
         """Defaults = the best measured configuration: lexical + embeddings, no reranker.
-        The reranker passed the same 18 checks with more noise and 44 extra API calls."""
+        The reranker passed the same 18 checks with more noise and 44 extra API calls.
+        wait_on_quota=False builds at once: when the free embedding quota is used up the
+        index starts lexical-only (dense_pending) and is not cached, so a later build completes it."""
         tree = tree or DecisionTree.load()
         configure_for_patient(patient_dir)
         fp = RemarkerIndex.fingerprint(patient_dir, tree, dense, rerank)
@@ -667,11 +670,17 @@ class Remarker:
                     reranker = JinaReranker()
                 except EmbeddingError:
                     reranker = None
-            index = RemarkerIndex.build(patient_dir, tree, embedder, reranker)
-            index.save(folder, fp)
+            index = RemarkerIndex.build(patient_dir, tree, embedder, reranker, wait_on_quota=wait_on_quota)
+            if embedder is None or index.seg_vectors is not None:  # never cache an index whose embeddings failed
+                index.save(folder, fp)
         rm = cls(index, tree, embedder)
         rm.attach_evidence(patient_dir, evidence)
         return rm
+
+    @property
+    def dense_pending(self) -> bool:
+        """Embeddings were wanted but are missing (quota used up); search runs lexical-only for now."""
+        return self.embedder is not None and self.ix.seg_vectors is None
 
     def attach_evidence(self, patient_dir: Path, evidence=None) -> None:
         """Blocks 1-4: `evidence` is a (bundle, history) pair, True to load the handoff

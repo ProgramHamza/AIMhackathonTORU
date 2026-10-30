@@ -95,11 +95,12 @@ def _norm(s: str) -> list[str]:
 class PatientState:
     """One loaded patient: its pipeline, its documents in the frontend's shape, cached answers."""
 
-    def __init__(self, patient_dir: Path, use_llm: bool, evidence=True):
+    def __init__(self, patient_dir: Path, use_llm: bool, evidence=True, wait_on_quota: bool = True):
         if evidence is True:
-            self.pipeline = Pipeline.from_env(patient_dir, use_llm=use_llm)
+            self.pipeline = Pipeline.from_env(patient_dir, use_llm=use_llm, wait_on_quota=wait_on_quota)
         else:  # imported record: blocks 1-4 output built at import time, or none
-            self.pipeline = Pipeline.from_env(patient_dir, use_llm=use_llm, use_evidence=False)
+            self.pipeline = Pipeline.from_env(patient_dir, use_llm=use_llm, use_evidence=False,
+                                              wait_on_quota=wait_on_quota)
             if evidence:
                 self.pipeline.remarker.attach_evidence(patient_dir, evidence)
         self.patient = self.pipeline.patient
@@ -144,6 +145,7 @@ class App:
     def __init__(self, patient_dir: Path | None, use_llm: bool):
         self.use_llm = use_llm
         self.patients: dict[str, PatientState] = {}  # insertion order: the last one is the default
+        self.generation: dict[str, int] = {}  # imports per patient ID; a background swap only for the latest
         self.lock = threading.Lock()
         if patient_dir:
             self.add(PatientState(patient_dir, use_llm))
@@ -168,13 +170,37 @@ class App:
                 self.add(PatientState(folder, self.use_llm, evidence=evidence or False))
 
     def import_files(self, files: list[dict]) -> dict:
+        """Answers as soon as the record is searchable. When the free embedding quota is used up,
+        search starts lexical-only and the embeddings are completed in the background."""
         out = importer.import_files(files)
-        state = PatientState(out["folder"], self.use_llm, evidence=out["evidence"] or False)
+        evidence = out["evidence"] or False
+        state = PatientState(out["folder"], self.use_llm, evidence=evidence, wait_on_quota=False)
+        pid = str(state.patient.get("id"))
+        with self.lock:
+            self.generation[pid] = gen = self.generation.get(pid, 0) + 1
         self.add(state)
+        pending = state.pipeline.remarker.dense_pending
+        if pending:
+            threading.Thread(target=self._complete_dense, args=(out["folder"], evidence, pid, gen),
+                             daemon=True).start()
         p = state.patient
         return {"patient": {"id": p.get("id"), "name": p.get("name"), "birthDate": p.get("dateOfBirth"),
                             "sex": p.get("sex", "")},
-                **out["report"], "documents": len(state.documents), "warnings": out["warnings"]}
+                **out["report"], "documents": len(state.documents), "warnings": out["warnings"],
+                "search": "keywords now, meaning-based search follows in about a minute" if pending else "complete"}
+
+    def _complete_dense(self, folder: Path, evidence, pid: str, gen: int) -> None:
+        try:
+            state = PatientState(folder, self.use_llm, evidence=evidence, wait_on_quota=True)
+        except Exception as e:  # noqa: BLE001 - the lexical index keeps serving
+            sys.stderr.write(f"embedding completion for {pid} failed: {e!r}\n")
+            return
+        if state.pipeline.remarker.dense_pending:
+            return
+        with self.lock:  # in place: the default patient (last imported) stays the same
+            if self.generation.get(pid) == gen and pid in self.patients:
+                self.patients[pid] = state
+                sys.stderr.write(f"embeddings ready for patient {pid}\n")
 
 
 def make_handler(app: App):

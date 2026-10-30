@@ -131,3 +131,46 @@ def test_knee_case_drug_table_plans_sides_and_allergy(offline):
     assert items["current_medication"]["status"] == "found"
     kinds = sorted(c["kind"] for c in res["result"]["conflicts"])
     assert kinds == ["laterality", "status"]
+
+
+class QuotaThenReady:
+    """Embedder whose free quota is used up until someone waits for the next minute."""
+    calls = 0
+
+    def __init__(self, *a, **k):
+        pass
+
+    def embed(self, texts, task, timeout=30.0, wait_on_quota=False):
+        import numpy as np
+        if not wait_on_quota:
+            raise remarker.EmbeddingError("per-minute quota used up")
+        rows = np.array([[len(t) % 7 + 1.0, len(t) % 5 + 1.0, 1.0] for t in texts], np.float32)
+        return rows / np.linalg.norm(rows, axis=1, keepdims=True)
+
+
+def test_import_answers_at_once_and_completes_embeddings_in_the_background(offline, monkeypatch, tmp_path):
+    import time
+    monkeypatch.setattr(remarker, "GeminiEmbedder", QuotaThenReady)
+    app = offline
+    report = app.import_files(files_from_folder(FIXTURE))
+    pid = report["patient"]["id"]
+    assert report["search"].startswith("keywords now")
+    first = app.patients[pid]
+    assert first.pipeline.remarker.dense_pending
+    for _ in range(100):  # the background thread swaps in the full index
+        if not app.patients[pid].pipeline.remarker.dense_pending:
+            break
+        time.sleep(0.1)
+    done = app.patients[pid]
+    assert done is not first and not done.pipeline.remarker.dense_pending
+    assert app.find("", "") is done
+
+
+def test_an_index_without_its_embeddings_is_not_cached(monkeypatch, tmp_path):
+    monkeypatch.setattr(remarker, "GeminiEmbedder", QuotaThenReady)
+    monkeypatch.setattr(remarker, "CACHE_DIR", tmp_path / "cache")
+    rm = remarker.Remarker.for_patient(FIXTURE, evidence=False, wait_on_quota=False)
+    saved = lambda: [p for p in (tmp_path / "cache").rglob("*") if p.is_file()]
+    assert rm.dense_pending and not saved()
+    again = remarker.Remarker.for_patient(FIXTURE, evidence=False, wait_on_quota=True)
+    assert not again.dense_pending and saved()

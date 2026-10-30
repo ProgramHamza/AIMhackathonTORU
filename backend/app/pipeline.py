@@ -74,7 +74,7 @@ class Pipeline:
 
     @classmethod
     def from_env(cls, patient_dir: Path | str | None = None, use_llm: bool = True,
-                 use_evidence: bool = True) -> "Pipeline":
+                 use_evidence: bool = True, wait_on_quota: bool = True) -> "Pipeline":
         load_env_file()
         patient_dir = Path(patient_dir or os.environ.get("PATIENT_DIR") or "")
         if not (patient_dir / "patient.json").exists():
@@ -87,7 +87,7 @@ class Pipeline:
         client = prompt_client() if use_llm and default_settings()["llm"] != "off" else None
         analyzer = make_default_analyzer(tree, client)
         analyzer.timeout = PROMPT_LLM_TIMEOUT_S
-        remarker = Remarker.for_patient(patient_dir, tree, evidence=use_evidence)
+        remarker = Remarker.for_patient(patient_dir, tree, evidence=use_evidence, wait_on_quota=wait_on_quota)
         finalizer = Finalizer.from_env() if use_llm else Finalizer(None, None)
         patient = json.loads((patient_dir / "patient.json").read_text(encoding="utf-8"))
         return cls(analyzer, remarker, finalizer, patient)
