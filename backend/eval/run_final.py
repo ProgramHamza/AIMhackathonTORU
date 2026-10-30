@@ -1,6 +1,6 @@
 """End-to-end check of blocks 5-8 on the five challenge situations.
 
-Reads the situations' prompts from eval/cases.yaml (D01-D05) and the expected source
+Reads the situations' prompts (D01-D05, eval/private/challenge-cases.yaml) and the expected source
 documents from the challenge's cases/expected.json (not copied into this repo).
 
 Per question it reports:
@@ -20,6 +20,7 @@ import time
 from pathlib import Path
 
 import yaml
+from eval.cases import load_cases
 
 from app.prompt_analysis import PromptAnalyzer
 from app.remarker import Remarker
@@ -55,7 +56,7 @@ def main(argv=None):
     ap.add_argument("--tag", default="")
     args = ap.parse_args(argv)
 
-    cases = {c["id"]: c for c in yaml.safe_load((HERE / "cases.yaml").read_text(encoding="utf-8"))["cases"]}
+    cases = {c["id"]: c for c in load_cases()}
     expected = {q["id"]: q for q in json.loads(args.expected.read_text(encoding="utf-8"))}
     patient = json.loads((args.patient / "patient.json").read_text(encoding="utf-8"))
     rm = Remarker.for_patient(args.patient)

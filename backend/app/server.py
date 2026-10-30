@@ -11,8 +11,9 @@ blocks 5-8. `documents` is the frontend's document shape: sections of paragraphs
 passages carry the same segment IDs ('<doc_id>#<n>') the result cites, so every citation
 resolves to the exact text it was taken from.
 
-Name and date of birth must match a loaded patient.json; leaving both empty selects the most
-recently loaded patient (the demo flow). Imported records are stored and prepared by app.importer
+No patient ships with the app: the server starts empty unless --patient points at a local folder,
+and records arrive through /api/import. Name and date of birth must match a loaded patient.json;
+leaving both empty selects the most recently imported patient. Imported records are stored and prepared by app.importer
 and replace an earlier patient with the same ID. Binds to 127.0.0.1 by default: responses contain
 patient data. --host 0.0.0.0 is for a hosted demo with synthetic data only (see docs/deployment.md);
 ALLOW_IMPORT=0 turns the upload endpoint off.
@@ -239,6 +240,8 @@ def make_handler(app: App):
                 return self._send(400, {"error": "Enter the role and task"})
             if len(task) > MAX_TASK_CHARS:
                 return self._send(400, {"error": "Task text is too long"})
+            if not app.patients:
+                return self._send(404, {"error": "No patient loaded yet · import a patient folder first"})
             state = app.find(name, birth)
             if state is None:
                 return self._send(404, {"error": "No patient found · check name and date of birth"})
@@ -291,19 +294,10 @@ def _main(argv: list[str]) -> int:
     ap.add_argument("--host", default=os.environ.get("HOST", "127.0.0.1"))
     ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", "8000")))
     ap.add_argument("--no-llm", action="store_true")
-    ap.add_argument("--import-bundle", type=Path, default=os.environ.get("IMPORT_BUNDLE"),
-                    help="JSON {files: [{name, text}]} (python -m app.importer --bundle) imported at startup "
-                         "and made the default patient; e.g. a private Render secret file")
     args = ap.parse_args(argv)
     t = time.perf_counter()
     app = App(Path(args.patient) if args.patient else None, use_llm=not args.no_llm)
     app.load_imports()  # records imported before a restart
-    if args.import_bundle and args.import_bundle.is_file():
-        files = json.loads(args.import_bundle.read_text(encoding="utf-8-sig")).get("files", [])
-        report = app.import_files(files)
-        print(f"default patient from bundle: {report['documents']} documents", flush=True)
-    elif args.import_bundle:
-        print(f"no bundle at {args.import_bundle}; the default stays as loaded", flush=True)
     srv = Server((args.host, args.port), make_handler(app))
     docs = sum(len(s.documents) for s in app.patients.values())
     print(f"ready on http://{args.host}:{args.port} ({len(app.patients)} patient(s), {docs} documents, "

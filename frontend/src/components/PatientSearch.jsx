@@ -3,11 +3,9 @@ import { assess, importPatient } from '../lib/backend';
 import { detectLang, makeT, useLang } from '../lib/i18n';
 
 /**
- * Patient search. The bundled fictional patient is matched locally; everything else goes to the
- * backend (POST /api/assess), which checks name + date of birth and assesses the typed task.
- * Empty fields load the backend's patient with the default task.
+ * Patient search. No patient ships with the app: the doctor imports a patient folder, then types
+ * the role and task. The backend (POST /api/assess) checks name + date of birth and assesses the task.
  */
-const DEFAULT_TASK = 'Anaesthetist, pre-operative check before breast surgery';
 
 const CHARACTERS = [
   { id: 'purple', color: '#6b2bff', left: 62, width: 104, height: 232, radius: '0', face: { top: 26, left: 34 }, eyes: 'dot', gap: 20 },
@@ -74,32 +72,7 @@ function CrossLogo() {
   );
 }
 
-const norm = (s) => s.toLowerCase().replace(/[^a-zà-ÿß\s]/g, ' ').split(/\s+/).filter(Boolean);
-
-const words = (s) => s.toLowerCase().replace(/-/g, '').replace(/[^a-zà-ÿß]+/g, ' ').split(' ').filter((w) => w.length >= 3);
-
-/** Picks the prepared task closest to what the doctor typed; otherwise keeps the typed text as a custom task. */
-function matchTask(tasks, typed) {
-  const q = words(typed);
-  let best = null;
-  let score = 0;
-  for (const t of tasks) {
-    const w = words(`${t.label} ${t.role}`).filter((x) => x.length >= 4);
-    const n = q.filter((qt) => w.some((x) => x.startsWith(qt) || (qt.length >= 4 && qt.startsWith(x)))).length;
-    if (n > score) [best, score] = [t, n];
-  }
-  return best ?? { id: 'custom', label: typed.trim(), role: '', curated: false };
-}
-
-function findPatient(datasets, name, birth) {
-  const q = norm(name);
-  return datasets.find(({ patient: p }) => {
-    const full = norm(`${p.givenName} ${p.familyName}`);
-    return q.length > 0 && q.every((t) => full.includes(t)) && p.birthDate === birth;
-  });
-}
-
-export function PatientSearch({ datasets, onFound }) {
+export function PatientSearch({ onFound }) {
   const { lang, setLang, t } = useLang();
   const [name, setName] = useState('');
   const [birth, setBirth] = useState('');
@@ -228,13 +201,7 @@ export function PatientSearch({ datasets, onFound }) {
     // The typed task sets the UI language; unclear text keeps the current one.
     const next = detectLang(taskText) ?? lang;
     if (next !== lang) setLang(next);
-    const local = findPatient(datasets, name, birth);
-    if (local) {
-      finish(local, taskText.trim() ? matchTask(local.tasks, taskText) : local.tasks[0]);
-      return;
-    }
-    const blank = !name.trim() && !birth;
-    const task = taskText.trim() || (blank ? DEFAULT_TASK : '');
+    const task = taskText.trim();
     if (!task) {
       setError(makeT(next)('enterTask'));
       return;

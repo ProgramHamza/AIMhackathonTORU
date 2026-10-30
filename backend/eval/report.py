@@ -175,8 +175,8 @@ def build(runs, out: Path, prompts_file: Path | None):
     reports = {stem: load(stem) for _, stem in runs}
     prompts = {}
     if prompts_file and prompts_file.exists():
-        import yaml
-        prompts = {c["id"]: c["prompt"] for c in yaml.safe_load(prompts_file.read_text(encoding="utf-8"))["cases"]}
+        from eval.cases import load_cases
+        prompts = {c["id"]: c["prompt"] for c in load_cases(prompts_file)}
 
     parts = [f"<h1>Prompt analysis: which setup works best</h1>"
              f"<p class=sub>How well each setup turns a clinician's request into the checklist of facts to look for. "

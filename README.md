@@ -73,27 +73,29 @@ sentence-level segments by its quote, and hands the remarker verified facts, der
 
 ## Data
 
-The challenge dataset is not part of this repository (`data/` is gitignored). To try the app without it, use the
-invented sample patient in `sample-data/patient-9001-0001` (same folder format: `patient.json`, `documents.json`,
-`documents/<id>.json`). The evaluation scripts and reports were run on the challenge data; their dataset-specific
-inputs stay private.
+No patient data is part of this repository: no records, no sample patient, no reports or test prompts taken
+from the challenge dataset. Everything patient-related stays on the developer's machine in gitignored paths
+(`data/`, `backend/.cache/`, `backend/eval/private/`, `backend/eval/results/`, `frontend/src/data/`, the report
+HTML files). The app starts empty: import a patient folder (`patient.json` + `documents/<id>.json`, the
+challenge's format) with the import button, then type the role and task.
 
 ## Deployment
 
-Frontend on Vercel (root directory `frontend`), backend on Render's free plan from `render.yaml`, with the
-sample patient only: step by step in `docs/deployment.md`.
+Frontend on Vercel (root directory `frontend`), backend on Render's free plan from `render.yaml`. It starts with
+no patient: step by step in `docs/deployment.md`.
 
 ## Running the app (backend + frontend)
 
 ```bash
-cd backend && .venv/Scripts/python -m app.server --patient <dir>     # API on 127.0.0.1:8000
+cd backend && .venv/Scripts/python -m app.server                    # API on 127.0.0.1:8000, no patient yet
 cd frontend && npm ci && npm run dev -- --host 127.0.0.1 --port 4289
 ```
 
 `frontend/` is the React workspace UI. Vite proxies `/api` to the backend (`BACKEND_URL` overrides it).
 `POST /api/assess {name, birthDate, task}` returns the segmented documents and the pipeline result;
 `frontend/src/lib/backend.js` maps them to the UI and drops any citation that does not resolve.
-Empty name and birth date load the server's patient. No patient data is bundled into a build.
+Import a folder first (`POST /api/import`); empty name and birth date then open the last imported patient.
+No patient data is bundled into a build.
 
 Run the whole chain: `python -m app.pipeline "anaesthetist, pre-op check before breast surgery" --patient <dir>`.
 Evaluate it: `python -m eval.run_pipeline --patient <dir> --expected <cases/expected.json> --tag v2`,

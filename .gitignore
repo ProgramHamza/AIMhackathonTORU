@@ -8,7 +8,6 @@ backend/.venv/
 backend/eval/private/
 frontend/node_modules/
 frontend/dist/
-frontend/src/data/real/
 # never publish the challenge dataset or build output
 /data/
 *.zip
@@ -17,3 +16,15 @@ clinical-ui/dist-single/
 clinical-ui/node_modules/
 backend/eval/results/
 clinical-summary-simple.html
+
+# patient data and everything derived from it stays on the developer's machine
+sample-data/
+frontend/src/data/
+backend/eval/synthetic150/data/
+backend/reports/
+blocks14/evaluation/patient_readiness.py
+report*.html
+docs/report*.html
+docs/prompt-analysis-report.html
+*.mp4
+*.webm

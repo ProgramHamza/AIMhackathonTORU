@@ -28,8 +28,7 @@ def nodes(hits, sources=None):
 
 def test_anaesthesia_preop(tree):
     hits, cl, _ = tree.plan(
-        "Pre-operative anaesthesia check. You are the anaesthetist. Quadrantectomy of the "
-        "breast with intraoperative radiotherapy is scheduled.")
+        "Pre-operative anaesthesia check. You are the anaesthetist. Breast surgery is scheduled.")
     assert {"anaesthesiology", "preop", "surgery_planned", "region_breast"} <= nodes(hits)
     assert {"anticoagulants", "allergies", "cardiac_function"} <= items(cl, "critical")
     assert {"airway_aspiration_risk", "previous_anaesthesia"} <= items(cl, "critical")
@@ -54,7 +53,7 @@ def test_gp_diabetes_review(tree):
 def test_emergency_dizziness_vision(tree):
     hits, cl, _ = tree.plan(
         "Emergency department at night. You are the emergency physician. She arrives with "
-        "dizziness and blurred vision in the left eye.")
+        "dizziness and blurred vision.")
     assert {"emergency_medicine", "emergency", "symptom_neuro_vision"} <= nodes(hits)
     assert {"prior_similar_events", "anticoagulants", "allergies"} <= items(cl, "critical")
     assert {"contrast_reaction", "kidney_function", "contrast_relevant_meds",

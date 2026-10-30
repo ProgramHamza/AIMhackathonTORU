@@ -175,13 +175,3 @@ def test_an_index_without_its_embeddings_is_not_cached(monkeypatch, tmp_path):
     again = remarker.Remarker.for_patient(FIXTURE, evidence=False, wait_on_quota=True)
     assert not again.dense_pending and saved()
 
-
-def test_bundle_holds_the_record_and_the_server_accepts_it(offline, tmp_path):
-    from app.importer import write_bundle
-    out = tmp_path / "bundle.json"
-    n = write_bundle(FIXTURE, out)
-    files = json.loads(out.read_text(encoding="utf-8"))["files"]
-    assert n == len(files) and {f["name"] for f in files} >= {"patient.json"}
-    assert all(f["name"] == "patient.json" or f["name"].startswith("documents/") for f in files)
-    report = offline.import_files(files)
-    assert offline.find("", "").patient["id"] == report["patient"]["id"]

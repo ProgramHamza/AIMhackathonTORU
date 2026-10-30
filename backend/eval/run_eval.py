@@ -21,6 +21,7 @@ import time
 from pathlib import Path
 
 import yaml
+from eval.cases import load_cases
 
 HERE = Path(__file__).resolve().parent
 CASES = HERE / "cases.yaml"
@@ -186,7 +187,7 @@ def main(argv=None):
     ap.add_argument("--timeout", type=float, default=20.0, help="LLM timeout in seconds")
     args = ap.parse_args(argv)
 
-    cases = yaml.safe_load(CASES.read_text(encoding="utf-8"))["cases"]
+    cases = load_cases(CASES)
     if args.split != "all":
         cases = [c for c in cases if c["split"] == args.split]
 

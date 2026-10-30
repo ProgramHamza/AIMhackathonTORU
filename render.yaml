@@ -1,4 +1,4 @@
-# Render blueprint for the backend API (docs/deployment.md). Synthetic sample data only.
+# Render blueprint for the backend API (docs/deployment.md). Starts with no patient: visitors import one.
 services:
   - type: web
     name: clinical-summary-desk-api
@@ -6,7 +6,7 @@ services:
     plan: free
     rootDir: backend
     buildCommand: pip install -r requirements.txt -r ../blocks14/prep/requirements.txt
-    startCommand: python -m app.server --host 0.0.0.0 --patient ../sample-data/patient-9001-0001
+    startCommand: python -m app.server --host 0.0.0.0
     healthCheckPath: /api/health
     envVars:
       - key: PYTHON_VERSION
@@ -17,5 +17,3 @@ services:
         sync: false
       - key: ALLOW_IMPORT        # 1 lets visitors upload patient folders; 0 turns it off
         value: "1"
-      - key: IMPORT_BUNDLE       # optional private secret file: imported at startup as the default patient
-        value: /etc/secrets/patient-bundle.json

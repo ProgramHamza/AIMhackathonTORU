@@ -8,7 +8,6 @@ document text leaves the machine during the import.
 
 CLI (try a folder without the UI)
   python -m app.importer <patient folder>
-  python -m app.importer --bundle <patient folder> <out.json>   (for the server's --import-bundle)
 """
 from __future__ import annotations
 
@@ -160,23 +159,7 @@ def files_from_folder(folder: Path) -> list[dict]:
     return [{"name": p.relative_to(folder).as_posix(), "text": p.read_text(encoding="utf-8")} for p in paths]
 
 
-def write_bundle(folder: Path, out: Path) -> int:
-    """patient.json + documents/*.json of a folder -> one upload body file for the server's --import-bundle."""
-    files = [f for f in files_from_folder(folder) if f["name"] == "patient.json" or f["name"].startswith("documents/")]
-    classify(files)  # refuse a folder the server would refuse
-    out.write_text(json.dumps({"files": files}, ensure_ascii=False), encoding="utf-8")
-    return len(files)
-
-
 def _main(argv: list[str]) -> int:
-    if len(argv) == 3 and argv[0] == "--bundle":
-        try:
-            n = write_bundle(Path(argv[1]), Path(argv[2]))
-        except ImportProblem as e:
-            print(f"bundle refused: {e}")
-            return 1
-        print(f"wrote {argv[2]} ({n} files)")
-        return 0
     if len(argv) != 1:
         print(__doc__)
         return 2

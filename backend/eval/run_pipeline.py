@@ -21,6 +21,7 @@ from collections import Counter
 from pathlib import Path
 
 import yaml
+from eval.cases import load_cases
 
 from app.pipeline import Pipeline
 
@@ -56,7 +57,7 @@ def main(argv=None):
     ap.add_argument("--no-cache", action="store_true", help="fresh LLM calls (live timings)")
     args = ap.parse_args(argv)
 
-    cases = yaml.safe_load((HERE / "cases.yaml").read_text(encoding="utf-8"))["cases"]
+    cases = load_cases()
     by_id = {c["id"]: c for c in cases}
     expected = {q["id"]: q for q in json.loads(args.expected.read_text(encoding="utf-8"))}
     t = time.perf_counter()

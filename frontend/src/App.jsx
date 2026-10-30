@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { datasets } from "./data/dataset";
 import { SourceContext } from "./lib/SourceContext";
 import { refKey } from "./lib/sources";
 import { AppHeader } from "./components/AppHeader";
@@ -13,11 +12,11 @@ import { assess } from "./lib/backend";
 
 
 export default function App() {
-  // The assessment on screen: a bundled fixture or a backend response (lib/backend.js).
+  // The assessment on screen: a backend response (lib/backend.js). Nothing is bundled.
   const [active, setActive] = useState(null);
-  const dataset = active?.dataset ?? datasets[0];
-  const task = active?.task ?? dataset.tasks[0];
-  const { patient, encounter } = dataset;
+  const dataset = active?.dataset;
+  const task = active?.task;
+  const { patient, encounter } = dataset ?? {};
   const [detail, setDetail] = useState(null);
   const [open, setOpen] = useState(false);
   const [recordFilter, setRecordFilter] = useState("all");
@@ -106,7 +105,7 @@ export default function App() {
 
   const sourceApi = useMemo(
     () => ({
-      store: dataset.store,
+      store: dataset?.store,
       openSource,
       focusContradiction,
       activeKey:
@@ -116,19 +115,15 @@ export default function App() {
       openRecord,
       recordOpen: open && detail?.kind === "record",
     }),
-    [dataset.store, openSource, focusContradiction, openRecord, detail, open],
+    [dataset?.store, openSource, focusContradiction, openRecord, detail, open],
   );
 
   if (!found)
     return (
       <LangContext.Provider value={langApi}>
       <div className="flex h-full flex-col">
-        <AppHeader
-          clinician={datasets[0].encounter.clinician}
-          role={datasets[0].encounter.clinician.role}
-        />
+        <AppHeader clinician={{ name: langApi.t("clinician") }} />
         <PatientSearch
-          datasets={datasets}
           onFound={(next, picked) => {
             setDetail(null);
             setOpen(false);

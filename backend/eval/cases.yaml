@@ -10,59 +10,10 @@
 # must    : items that must be on the checklist (any priority)
 # forbid  : items that should not be on the checklist for this request
 #
-# D01-D05 are the challenge situations (title + description as a clinician would type them).
+# D01-D05, the challenge situations, quote the challenge dataset and live in the gitignored
+# eval/private/challenge-cases.yaml (eval/cases.py merges them in when present).
 
 cases:
-  - id: D01
-    split: dev
-    prompt: "Pre-operative anaesthesia check. You are the anaesthetist. She is scheduled for a quadrantectomy (partial removal of the breast) with intraoperative radiotherapy on 16 May 2016."
-    role_ok: [anaesthesiology]
-    tasks: [preop]
-    context: [surgery_planned, region_breast]
-    top: [anticoagulants, allergies, cardiac_function]
-    must: [current_medication, airway_aspiration_risk, previous_anaesthesia]
-    forbid: [tumour_receptors, family_history]
-
-  - id: D02
-    split: dev
-    prompt: "Surgery planning after the tumour board, April 2016. You are the surgeon planning her operation after the tumour board."
-    role_ok: [surgery, breast_surgery]
-    tasks: [surgery_planning, tumour_board]
-    context: []
-    top: [cancer_histology, cancer_staging, tumour_receptors, tumour_board_plan]
-    must: [planned_procedures, anticoagulants]
-    forbid: [eye_findings, fall_risk_mobility]
-
-  - id: D03
-    split: dev
-    prompt: "Diabetes review at the GP. You are her general practitioner (GP), reviewing her diabetes in spring 2016."
-    role_ok: [general_practice]
-    tasks: [chronic_review]
-    context: [focus_diabetes]
-    top: [glucose_lowering, diabetes_control, weight_bmi]
-    must: [kidney_function, blood_pressure]
-    forbid: [tumour_receptors, previous_anaesthesia, airway_aspiration_risk]
-
-  - id: D04
-    split: dev
-    prompt: "Emergency department at night. You are the emergency physician on night duty. She arrives at 02:00 with dizziness and blurred vision in the left eye."
-    role_ok: [emergency_medicine]
-    tasks: [emergency]
-    context: [symptom_neuro_vision]
-    top: [prior_similar_events, anticoagulants, allergies]
-    must: [antihypertensives, contrast_reaction, kidney_function, contrast_relevant_meds, neuro_findings]
-    forbid: [tumour_receptors, family_history]
-
-  - id: D05
-    split: dev
-    prompt: "Open follow-ups from the 2015 hospital stay. You are her GP. You check which follow-ups from her June 2015 hospital stay are still open."
-    role_ok: [general_practice]
-    tasks: [followup_review]
-    context: []
-    top: [followups_recommended, followups_completed]
-    must: [vascular_findings, recent_admissions]
-    forbid: [tumour_receptors, fasting_last_intake]
-
   - id: D06
     split: dev
     prompt: "Gastroenterologist, colonoscopy under sedation tomorrow"

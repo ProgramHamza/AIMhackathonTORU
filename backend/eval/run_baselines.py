@@ -31,6 +31,7 @@ from collections import Counter
 from pathlib import Path
 
 import yaml
+from eval.cases import load_cases
 
 from app import outbound
 from app.llm_client import GeminiClient, LLMError
@@ -115,7 +116,7 @@ def main(argv=None):
     ap.add_argument("--limit", type=int, default=0, help="only the first N prompts (smoke test)")
     args = ap.parse_args(argv)
 
-    cases = yaml.safe_load((HERE / "cases.yaml").read_text(encoding="utf-8"))["cases"]
+    cases = load_cases()
     by_id = {c["id"]: c for c in cases}
     expected = {q["id"]: q for q in json.loads(args.expected.read_text(encoding="utf-8"))}
     known = yaml.safe_load((HERE / "private" / "known_contradictions.yaml").read_text(encoding="utf-8"))

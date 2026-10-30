@@ -12,12 +12,6 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "frontend", "run", "dev", "--", "--host", "127.0.0.1", "--port", "4289"],
       "port": 4289
-    },
-    {
-      "name": "film-studio",
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["C:/Users/mhrom/Desktop/clinical-video/studio/server.mjs", "4400"],
-      "port": 4400
     }
   ]
 }

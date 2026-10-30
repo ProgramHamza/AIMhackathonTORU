@@ -29,6 +29,7 @@ from collections import Counter
 from pathlib import Path
 
 import yaml
+from eval.cases import load_cases
 
 from app import outbound, vault
 from app.deidentify import Deidentifier
@@ -176,7 +177,7 @@ def security(patient: Path) -> dict:
 
 def interactions(patient: Path, expected: Path, splits: list[str]) -> dict:
     """Every hand-off, on the template path (no network) so it runs on every prompt."""
-    cases = yaml.safe_load((HERE / "cases.yaml").read_text(encoding="utf-8"))["cases"]
+    cases = load_cases()
     prompts = [c["prompt"] for c in cases if c["id"] in SITUATION_CASE.values()]
     prompts += [c["prompt"] for c in cases if c["split"] in splits]
     pipe = Pipeline.from_env(patient, use_llm=False)

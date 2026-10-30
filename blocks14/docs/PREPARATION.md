@@ -30,7 +30,7 @@ Default output is `data/prepared/patient-0000-0001.json` (ignored). Override wit
 
 The parser uses structure, not official patient/document identifiers or a drug-name list. Its coverage is deliberately bounded. Narrative prescriptions, unrecognized table layouts, concentrations, conditional/discontinued rows and ambiguous quantities are excluded with processing gaps when encountered inside the recognized table. Arbitrary PDF, OCR, HTML tables and multilingual document formats are not yet supported.
 
-One ambiguous medication row in the official 2015 letter contains an extra unlabelled number. The parser deliberately leaves it unresolved; it must not assume that number's unit or meaning. This will be handled by contextual extraction/review later.
+A medication row with an extra unlabelled number is deliberately left unresolved; the parser must not assume that number's unit or meaning. This will be handled by contextual extraction/review later.
 
 ## Dates, completeness and validation
 
@@ -151,40 +151,12 @@ python -m backend.evidence.reconciliation --input data/prepared/patient-0000-000
 
 This sequence uses zero model calls and never overwrites the raw extraction bundle. Run detection from that raw bundle. The report references the raw source version; enrichment produces a new version. Rebuild downstream normalization/reconciliation indexes against the enriched version, as shown, rather than mixing indexes from different versions.
 
-The current patient output preserves 263 source facts and adds three calculated BMI values. Two source blocks meet the conservative BMI inconsistency rule: recorded 29.4 versus calculated 26.99, and recorded 29 versus calculated 22.91. The third recorded BMI is consistent within the rule's tolerances. Conflicting admission dates and a finding/summary laterality difference are retained as two review candidates, excluded from the default display helper. The malformed discharge year remains an existing data-quality/extraction gap; it is not counted as an accepted contradiction.
+Per-patient results (fact counts, accepted contradictions, review notes) are written to ignored paths under `data/` and are not part of this repository.
 
-The accepted count is two, below the hackathon target of at least five net contradictions. Do not add candidate counts or data-quality errors to claim that target is met. Further recall work requires source-grounded event linking, broader independent labels and candidate adjudication. The original scope gaps remain as an extraction audit trail; the bounded detector does not claim to complete all reconciliation/calculation/contradiction processing.
+Accepted contradictions below the hackathon target of five are reported as such. Do not add candidate counts or data-quality errors to claim that target is met. Further recall work requires source-grounded event linking, broader independent labels and candidate adjudication.
 
 For integration, serve the enriched bundle's accepted contradictions and source-linked derived values; keep candidate contradictions separate from the ordinary clinical display. Preserve full group lineage when ranking presentation representatives. On the current machine, a five-run in-process detector check took about 76 ms median / 110 ms worst for this bundle. This excludes file IO and the rest of the query pipeline and is not the end-to-end load-time metric.
 
-## Current integrated handoff
+## Patient-specific audits
 
-The patient-focused source audit recovered four omitted claims: blood-pressure checks, GP medication adjustment, repeated eye follow-up, and explicit causal attribution of the prior presenting symptoms. `backend.refinement` selects source passages by regex, runs the existing extraction and source-support review on those passages only, and preserves every original fact and processing gap. The current refinement used two Gemini calls, taking the bundle from 263 to 267 facts. It requires a raw extraction bundle; derived outputs must be rebuilt afterward.
-
-```powershell
-python -m backend.handoff --input data/prepared/patient-0000-0001-refined.json --output data/handoff/patient-0000-0001
-python -m evaluation.patient_readiness --input data/handoff/patient-0000-0001/evidence.json --output data/evaluation/patient-readiness.json
-```
-
-The ignored handoff folder is the current integration artifact. `manifest.json` lists file hashes: validate all hashes before consuming a package, particularly if a rebuild was interrupted. `evidence.json` contains 267 source facts, three calculated BMI values, the signed weight change (-12 kg), and status-labelled contradictions. `source-evidence.json` is the immutable source for `contradiction-report.json`; `normalization.json`, `reconciliation.json` and `history.json` all refer to the final enriched evidence version. No frontend or API routes are changed by this build.
-
-`backend/evidence/history.py` supplies measurement histories, latest day-orderable measurement selections, and the latest dated discharge medication list. The supplied patient defaults to an as-of date of 15 April 2016 from the source documents, not today's date. Earlier medication schedules remain available and are not combined with the newest list. Same-date measurement ties are retained. Unknown/partial dates and unanchored historical values are not silently ranked as new measurements. Document-date ordering is labelled explicitly and never asserted as the actual measurement date. The weight change uses the cited 78 kg and 66 kg endpoints; conflicting endpoint values prevent the calculation.
-
-The published-scenario audit currently finds evidence groups for all 15 questions: 12 are evidence-ready, while three still need query-specific review. Two involve full-record absence judgments (renal function and completion of carotid follow-up); the third involves conflicting laterality evidence. This is evidence readiness, not 15/15 correct visible answers. The query layer must still retrieve, summarize and cite these records, preserve review flags, and establish absence from full-document coverage rather than a missing extracted fact. The patient-specific audit lives only under `evaluation/`; runtime modules do not import it.
-
-## Completed patient source review
-
-The scenario-critical facts were inspected against all eight supplied clinical documents. The ignored `data/evaluation/patient-source-review.json` contains source hashes, citations for the 15 scenario evidence groups, 15 numeric/schedule checks, five uncertainty findings, and scoped record-coverage notes. This is assistant source review, not independent clinician certification or a review of every ancillary extracted fact. Current medication strengths/schedules, allergy reactions, EF, HbA1c, receptor values, staging, recommendations and weight values agree with the inspected source text.
-
-One chronology improvement was applied: seven main outpatient measurement facts now cite the introduction establishing the visit on 4 April 2016. Their time basis is contextual, while the letter date remains 5 April. The bounded rule requires one valid dated outpatient introduction and main visit measurement sections; ambiguous, invalid, future or historical contexts are excluded. Original facts remain in the previous raw bundle, and the change log preserves before/after metadata.
-
-Current rebuild sequence:
-
-```powershell
-python -m backend.evidence.encounter_context --input data/prepared/patient-0000-0001-refined.json --output data/prepared/patient-0000-0001-reviewed.json
-python -m backend.handoff --input data/prepared/patient-0000-0001-reviewed.json --output data/handoff/patient-0000-0001
-```
-
-The admission header says 10 April, while the narrative says admission to the ward on 12 April. Hospital versus ward admission is a possible explanation; neither date was overwritten or given an invented common event ID. The original radiology report describes left-sided narrowing; its discharge reproduction reverses the descriptive sides while retaining a left-sided conclusion. This strongly suggests a transcription disagreement, but the underlying event identity and true side are not silently adjudicated. Both detector entries remain candidates, with exact competing source passages in the review.
-
-Additional review notes retain specimen collection on 11 April versus biopsy described under the 12 April ultrasound section, the invalid discharge year `20156` alongside the valid narrative date, and the unlabelled `0,5` in the historical Byetta row. These are not automatically counted as confirmed contradictions. No renal-function result or subsequent completed carotid follow-up was found in the eight supplied documents; referenced laboratory annexes are not included. These are scoped review conclusions, not new patient absence facts or a blanket runtime `searchComplete` flag.
+Source reviews and scenario-readiness audits of a supplied patient are run and kept locally under ignored `data/` paths. They quote the record, so neither their scripts' outputs nor their notes are published here.

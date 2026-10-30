@@ -17,6 +17,7 @@ import time
 from pathlib import Path
 
 import yaml
+from eval.cases import load_cases
 
 from app.prompt_analysis import PromptAnalyzer
 from app.remarker import Remarker
@@ -34,7 +35,7 @@ def main(argv=None):
     args = ap.parse_args(argv)
 
     checks = yaml.safe_load((HERE / "remarker_cases.yaml").read_text(encoding="utf-8"))["checks"]
-    prompts = {c["id"]: c["prompt"] for c in yaml.safe_load((HERE / "cases.yaml").read_text(encoding="utf-8"))["cases"]}
+    prompts = {c["id"]: c["prompt"] for c in load_cases()}
     tree = DecisionTree.load()
     t = time.perf_counter()
     rm = Remarker.for_patient(args.patient, tree, dense=not args.no_dense, rerank=args.rerank)
