@@ -8,7 +8,7 @@ from app.keywords import _patterns, doc_labels, keyword_for
 from app.segmenter import Document, segment_document
 from app.summary import template_claim
 
-DOC = ("Vorgeschichte. Stabil eingestellter Diabetes mellitus Typ 2 mit HbA1c von 6,4%, sonst unauffällig. "
+DOC = ("Vorgeschichte. Stabil eingestellter Diabetes Typ II mit HbA1c von 6,4%, sonst unauffällig. "
        "Aspirin 100mg oral 1 0 0 0 ST\n"
        "Die Patientin wurde besprochen und eine Kontrolle des Blutdrucks in 2 Wochen wird empfohlen. "
        "Patientin geb. am 01.02.1950 kommt zur Aufnahme.")
@@ -33,7 +33,7 @@ def text_at(spans):
 
 
 def test_measurement_fact_gives_its_exact_words_and_highlight():
-    s = "Stabil eingestellter Diabetes mellitus Typ 2 mit HbA1c von 6,4%, sonst unauffällig."
+    s = "Stabil eingestellter Diabetes Typ II mit HbA1c von 6,4%, sonst unauffällig."
     hb = fact("F1", "measurement", "HbA1c", "6.4 %", "HbA1c von 6,4%", concept="hba1c")
     key, spans = keyword_for(flag_for(s, fact_ids=["F1"]), [hb], _patterns(["hba1c"]))
     assert key == "HbA1c von 6,4%" and text_at(spans) == ["HbA1c von 6,4%"]
@@ -64,13 +64,13 @@ def test_clause_with_the_item_term_and_the_longer_clause_on_a_tie():
 def test_short_passage_whole_long_passage_first_words():
     s = "Aspirin 100mg oral 1 0 0 0 ST"
     assert keyword_for(flag_for(s), [], [])[0] == s
-    long = "Stabil eingestellter Diabetes mellitus Typ 2 mit HbA1c von 6,4%, sonst unauffällig."
+    long = "Stabil eingestellter Diabetes Typ II mit HbA1c von 6,4%, sonst unauffällig."
     key, spans = keyword_for(flag_for(long), [], _patterns(["nichts"]))
     assert key.endswith(" …") and len(key.split()) == 11 and DOC[spans[0][0]:spans[0][1]] == key[:-2]
 
 
 def test_quote_running_past_the_passage_still_counts():
-    s = "Stabil eingestellter Diabetes mellitus Typ 2 mit HbA1c"   # the segmenter cut the sentence here
+    s = "Stabil eingestellter Diabetes Typ II mit HbA1c"   # the segmenter cut the sentence here
     hb = fact("F4", "attribute", "Recorded HbA1c", "HbA1c von 6,4%", "HbA1c von 6,4%, sonst unauffällig.")
     hb.quotes = [("D1", DOC.index("Stabil eingestellter"), DOC.index("sonst") + 5, DOC[DOC.index("Stabil eingestellter"):DOC.index("sonst") + 5])]
     key, spans = keyword_for(flag_for(s, fact_ids=["F4"]), [hb], _patterns(["hba1c"]))
@@ -104,3 +104,17 @@ def test_template_line_shows_keyword_and_document_name():
     c = template_claim(it, "de", "T1", "current", {"D1": {"en": "Discharge letter 01/2020", "de": "Arztbrief 01/2020"}})
     assert c.text == "Blood thinners: Aspirin 100 mg oral 1-0-0-0 (Arztbrief 01/2020)".replace("Blood thinners", "Blutverdünner")
     assert c.cites == ["D1#1"]
+
+
+def test_value_clause_joins_a_fact_without_the_value():
+    s = "Die Patientin wurde besprochen und eine Kontrolle des Blutdrucks in 2 Wochen wird empfohlen."
+    plan = fact("F5", "event", "Kontrolle", "Kontrolle", "Kontrolle des Blutdrucks", category="care_plans",
+                concept="followup:kontrolle")
+    key, spans = keyword_for(flag_for(s), [plan], _patterns(["kontrolle*"]))
+    assert "in 2 Wochen" in key and len(spans) == 2
+
+
+def test_decimal_comma_does_not_split_a_clause():
+    s = "Stabil eingestellter Diabetes Typ II mit HbA1c von 6,4%, sonst unauffällig."
+    key, _ = keyword_for(flag_for(s), [], _patterns(["hba1c"]))
+    assert key.endswith("HbA1c von 6,4%")

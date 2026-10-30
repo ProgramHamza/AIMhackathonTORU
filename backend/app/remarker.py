@@ -69,6 +69,8 @@ FACT_KIND_DOMAINS = {"medication": {"medications"}, "allergy": {"allergies", "al
                      "measurement": {"vital_signs", "results_lab", "results_pathology"}}
 LEXICAL_SCALE = 4.0       # idf sum that gives ~63% lexical strength
 HEADER_LEXICAL = 0.6      # lexical strength of a passage listed under a header that names the item
+IDF_MIN_PASSAGES = 150    # term rarity is judged as in a record of at least this size: in a small imported
+                          # record every word looks common and a drug name alone would never flag
 DENSE_LOW_PCT, DENSE_HIGH_PCT = 75, 99.5
 RERANK_LOW, RERANK_SPAN = 0.05, 0.25
 
@@ -296,7 +298,7 @@ class RemarkerIndex:
                     sg.codes.add(code)
 
         # near-duplicates and contradiction candidates
-        contradictions = _near_duplicates(segs)
+        contradictions = _near_duplicates(segs) + _allergy_conflicts(segs)
 
         # lexical: one automaton over all item terms
         items = tree.items
@@ -321,7 +323,7 @@ class RemarkerIndex:
                 seen.add(pat)
             for pat in seen:
                 term_df[pat] = term_df.get(pat, 0) + 1
-        n = max(1, len(scored))
+        n = max(IDF_MIN_PASSAGES, len(scored))
 
         def idf(pat):
             df = term_df.get(pat, 0)
@@ -547,6 +549,44 @@ def _near_duplicates(segs: list[_Seg]) -> list[ContradictionCandidate]:
                 parent[find(a)] = find(b)  # same passage, nothing differs that matters
     for k in idx:
         segs[k].group = find(k)
+    return out
+
+
+# "no known allergies" (normalised text) and a documented allergy
+ALLERGY_NONE = re.compile(r"\b(allergi\w*|unvertraeglichkeit\w*) (keine|nicht) (bekannt|bekannte|vorhanden|dokumentiert)"
+                          r"|\bkeine (bekannten )?(allergi|unvertraeglichkeit)|\bnkda\b|\bno known (drug )?allerg")
+ALLERGY_TERM = re.compile(r"(allergi|unvertraeglichkeit)")
+
+
+def _allergy_conflicts(segs: list[_Seg]) -> list[ContradictionCandidate]:
+    """A later passage says no allergies are known although an earlier one records an allergy.
+
+    An allergy does not go away, so this is a status contradiction whatever happened in between;
+    the reverse order (none, then a new allergy) is not reported. One candidate per document pair.
+    """
+    none, present = [], []
+    for sg in segs:
+        if sg.seg.kind not in SCORED_KINDS:
+            continue
+        text = normalize(f"{sg.seg.label} {sg.seg.text}")
+        if ALLERGY_NONE.search(text):
+            none.append(sg)
+        elif ALLERGY_TERM.search(text) and sg.polarity not in ("negated", "uncertain"):
+            present.append(sg)
+    out, seen = [], set()
+    for n in none:
+        for p in present:
+            if n.seg.doc_id == p.seg.doc_id or (n.seg.doc_id, p.seg.doc_id) in seen:
+                continue
+            if n.seg.doc_date and p.seg.doc_date and n.seg.doc_date < p.seg.doc_date:
+                continue
+            seen.add((n.seg.doc_id, p.seg.doc_id))
+            when = lambda s: s.seg.doc_date.isoformat() if s.seg.doc_date else "undated"
+            out.append(ContradictionCandidate(
+                segment_ids=[p.seg.segment_id, n.seg.segment_id], doc_ids=[p.seg.doc_id, n.seg.doc_id],
+                differing=[], kind="status", status="accepted",
+                explanation=(f"Document {n.seg.doc_id} ({when(n)}) states that no allergies are known, but document "
+                             f"{p.seg.doc_id} ({when(p)}) records an allergy: \"{' '.join(p.seg.text.split())[:80]}\".")))
     return out
 
 

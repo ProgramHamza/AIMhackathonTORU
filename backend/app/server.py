@@ -13,11 +13,12 @@ resolves to the exact text it was taken from.
 
 Name and date of birth must match a loaded patient.json; leaving both empty selects the most
 recently loaded patient (the demo flow). Imported records are stored and prepared by app.importer
-and replace an earlier patient with the same ID. Binds to 127.0.0.1 only: responses contain
-patient data.
+and replace an earlier patient with the same ID. Binds to 127.0.0.1 by default: responses contain
+patient data. --host 0.0.0.0 is for a hosted demo with synthetic data only (see docs/deployment.md);
+ALLOW_IMPORT=0 turns the upload endpoint off.
 
 CLI
-  python -m app.server [--patient <dir>] [--port 8000] [--no-llm]
+  python -m app.server [--patient <dir>] [--host 127.0.0.1] [--port 8000] [--no-llm]
 """
 from __future__ import annotations
 
@@ -159,6 +160,13 @@ class App:
             return states[-1] if states else None
         return next((s for s in reversed(states) if s.matches(name, birth)), None)
 
+    def load_imports(self) -> None:
+        """Records imported before a restart. A patient loaded with --patient keeps its own copy."""
+        for folder, evidence in importer.stored_records():
+            pid = json.loads((folder / "patient.json").read_text(encoding="utf-8")).get("id")
+            if str(pid) not in self.patients:
+                self.add(PatientState(folder, self.use_llm, evidence=evidence or False))
+
     def import_files(self, files: list[dict]) -> dict:
         out = importer.import_files(files)
         state = PatientState(out["folder"], self.use_llm, evidence=out["evidence"] or False)
@@ -221,6 +229,8 @@ def make_handler(app: App):
                 return -1
 
         def _import(self):
+            if os.environ.get("ALLOW_IMPORT", "1") == "0":
+                return self._send(403, {"error": "Import is turned off on this server"})
             length = self._length()
             if not 0 < length <= MAX_IMPORT_BODY:
                 return self._send(400, {"error": "upload missing or too large"})
@@ -252,14 +262,16 @@ class Server(ThreadingHTTPServer):
 def _main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(prog="python -m app.server")
     ap.add_argument("--patient", type=Path, default=os.environ.get("PATIENT_DIR"))
+    ap.add_argument("--host", default=os.environ.get("HOST", "127.0.0.1"))
     ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", "8000")))
     ap.add_argument("--no-llm", action="store_true")
     args = ap.parse_args(argv)
     t = time.perf_counter()
     app = App(Path(args.patient) if args.patient else None, use_llm=not args.no_llm)
-    srv = Server(("127.0.0.1", args.port), make_handler(app))
+    app.load_imports()  # records imported before a restart
+    srv = Server((args.host, args.port), make_handler(app))
     docs = sum(len(s.documents) for s in app.patients.values())
-    print(f"ready on http://127.0.0.1:{args.port} ({len(app.patients)} patient(s), {docs} documents, "
+    print(f"ready on http://{args.host}:{args.port} ({len(app.patients)} patient(s), {docs} documents, "
           f"startup {(time.perf_counter() - t) * 1000:.0f} ms)", flush=True)
     try:
         srv.serve_forever()

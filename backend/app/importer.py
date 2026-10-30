@@ -96,9 +96,9 @@ def classify(files: list[dict]) -> tuple[dict, dict[str, dict], dict[str, dict],
     return patient, documents, extras, warnings
 
 
-def write_record(patient: dict, documents: dict[str, dict], extras: dict[str, dict], root: Path = IMPORT_DIR) -> Path:
+def write_record(patient: dict, documents: dict[str, dict], extras: dict[str, dict], root: Path | None = None) -> Path:
     """Replace this patient's import folder with the uploaded record."""
-    folder = root / f"patient-{patient['id']}"
+    folder = Path(root or IMPORT_DIR) / f"patient-{patient['id']}"
     if folder.exists():
         shutil.rmtree(folder)
     (folder / "documents").mkdir(parents=True)
@@ -120,7 +120,7 @@ def build_evidence(folder: Path, patient_id: str):
     return load_bundle(patient_id, folder / "handoff")
 
 
-def import_files(files: list[dict], root: Path = IMPORT_DIR) -> dict:
+def import_files(files: list[dict], root: Path | None = None) -> dict:
     """Check and store an upload, run blocks 1-4. Returns the folder, the evidence (or None) and a report."""
     t0 = time.perf_counter()
     patient, documents, extras, warnings = classify(files)
@@ -138,6 +138,19 @@ def import_files(files: list[dict], root: Path = IMPORT_DIR) -> dict:
                        "facts": len(bundle.facts) if bundle else 0,
                        "contradictions": len(bundle.contradictions) if bundle else 0,
                        "ms": round((time.perf_counter() - t0) * 1000)}}
+
+
+def stored_records(root: Path | None = None):
+    """Earlier imports on disk -> (folder, evidence or None), so a restarted server keeps them."""
+    for folder in sorted(Path(root or IMPORT_DIR).glob("patient-*")):
+        if not (folder / "patient.json").exists():
+            continue
+        pid = json.loads((folder / "patient.json").read_text(encoding="utf-8")).get("id", "")
+        try:
+            evidence = load_bundle(pid, folder / "handoff")
+        except (BundleError, ValueError, OSError):
+            evidence = None
+        yield folder, evidence
 
 
 def files_from_folder(folder: Path) -> list[dict]:

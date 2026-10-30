@@ -78,6 +78,11 @@ invented sample patient in `sample-data/patient-9001-0001` (same folder format: 
 `documents/<id>.json`). The evaluation scripts and reports were run on the challenge data; their dataset-specific
 inputs stay private.
 
+## Deployment
+
+Frontend on Vercel (root directory `frontend`), backend on Render's free plan from `render.yaml`, with the
+sample patient only: step by step in `docs/deployment.md`.
+
 ## Running the app (backend + frontend)
 
 ```bash

@@ -29,6 +29,7 @@ class Statement:
     doc_id: str | None = None
     quote: str | None = None
     kind: str = "finding"          # finding | not_documented | conflict
+    doc_ids: list[str] = field(default_factory=list)   # every document the line cites
 
 
 @dataclass
@@ -205,7 +206,8 @@ def screen_from_final(name: str, res, calls: int) -> Screen:
         cite = segs.get(c.cites[0]) if c.cites else None
         kind = ("not_documented" if c.kind in ("not_documented", "incomplete")
                 else "derived" if c.claim_id.startswith("V") else "finding")
-        st.append(Statement(c.text, cite.doc_id if cite else None, cite.text if cite else None, kind))
+        cited = list(dict.fromkeys(segs[x].doc_id for x in c.cites if x in segs))
+        st.append(Statement(c.text, cite.doc_id if cite else None, cite.text if cite else None, kind, cited))
     for it in f.items:  # the ranked list under the summary
         if it.status in ("not_documented", "processing_incomplete"):
             st.append(Statement(f"{it.label.en}: not documented", kind="not_documented"))
@@ -248,7 +250,8 @@ def code_metrics(screen: Screen, docs: dict[str, str]) -> dict:
     for s in findings:
         # source tags like "[90010018, 2016-04-15]" are citations, not claims
         text = _TAG.sub(" ", s.text)
-        cited = [d for d in docs if d in s.text] or ([s.doc_id] if s.doc_id in docs else [])
+        cited = ([d for d in docs if d in s.text] or [d for d in s.doc_ids if d in docs]
+                 or ([s.doc_id] if s.doc_id in docs else []))
         src = _norm(" ".join(docs[d] for d in cited)) if cited else all_text
         nums = {_num(n) for n in _NUM.findall(text)}
         src_nums = {_num(n) for n in _NUM.findall(src)}

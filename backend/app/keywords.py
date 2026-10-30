@@ -30,7 +30,8 @@ KIND_FITS = {"medication", "allergy"}   # these fit their item by kind alone (dr
 SUMMARY_KINDS = {"medication", "allergy"}  # rendered from the structured value ("100 mg oral 1-0-0-0")
 SKIP_CATEGORIES = {"demographics"}      # never a keyword: birth dates are identifiers
 
-_CLAUSE = re.compile(r"[,;()]|\s(?:und|sowie)\s")  # not ":", it joins a field to its value
+# not ":" (it joins a field to its value) and not a decimal comma ("6,4")
+_CLAUSE = re.compile(r",(?!\d)|(?<!\d),|[;()]|\s(?:und|sowie)\s")
 _WORD = re.compile(r"\S+")
 
 
@@ -172,13 +173,21 @@ def _from_facts(flag: Flag, facts, patterns, any_fact: bool = False) -> tuple[st
 # ---------------------------------------------------------------------------
 # 2. / 3. from the passage itself
 # ---------------------------------------------------------------------------
-def _trim(flag: Flag, a: int, b: int) -> tuple[str, tuple[int, int]]:
+def _trim(flag: Flag, a: int, b: int, patterns=()) -> tuple[str, tuple[int, int]]:
+    """At most CLAUSE_WORDS words, starting one word before the first item term (the words that
+    lead into a long clause are rarely the answer)."""
     chunk = flag.text[a:b]
     words = list(_WORD.finditer(chunk))
-    cut = words[CLAUSE_WORDS - 1].end() if len(words) > CLAUSE_WORDS else len(chunk.rstrip())
-    lead = len(chunk) - len(chunk.lstrip())
-    text = chunk[lead:cut].rstrip(" .")
-    return text + (" …" if len(words) > CLAUSE_WORDS else ""), (flag.start + a + lead, flag.start + a + lead + len(text))
+    first = 0
+    if len(words) > CLAUSE_WORDS and patterns:
+        first = next((max(0, k - 1) for k, w in enumerate(words) if _hits(w.group(), patterns)), 0)
+        first = min(first, len(words) - CLAUSE_WORDS)
+    last = min(len(words), first + CLAUSE_WORDS)
+    lo = words[first].start() if words else 0
+    hi = words[last - 1].end() if words else len(chunk)
+    text = chunk[lo:hi].rstrip(" .:;,")
+    shown = ("… " if first else "") + " ".join(text.split()) + (" …" if last < len(words) else "")
+    return shown, (flag.start + a + lo, flag.start + a + lo + len(text))
 
 
 def _from_text(flag: Flag, patterns) -> tuple[str, list[tuple[int, int]]]:
@@ -188,13 +197,14 @@ def _from_text(flag: Flag, patterns) -> tuple[str, list[tuple[int, int]]]:
         last = m.end()
     bounds.append((last, len(flag.text)))
     scored = [(_hits(flag.text[a:b], patterns), a, b) for a, b in bounds if flag.text[a:b].strip()]
-    best = max(scored, key=lambda s: (s[0], s[2] - s[1]), default=None)  # tie: the longer clause says more
+    # tie: a clause with a value (185/110 mmHg) first, then the longer clause, which says more
+    best = max(scored, key=lambda s: (s[0], bool(re.search(r"\d", flag.text[s[1]:s[2]])), s[2] - s[1]), default=None)
     if best and best[0] > 0 and len(scored) > 1:
-        text, span = _trim(flag, best[1], best[2])
+        text, span = _trim(flag, best[1], best[2], patterns)
         return text, [span]
     whole = flag.text.strip()
     if len(whole) <= SHORT_PASSAGE:
-        text = whole.rstrip(" .")
+        text = whole.rstrip(" .:")
         return text, [s for s in [_locate(flag, text)] if s]
     text, span = _trim(flag, 0, len(flag.text))
     return text, [span]
@@ -218,10 +228,24 @@ def _with_sentence_facts(flag: Flag, facts, text: str, spans) -> tuple[str, list
     return "; ".join([text] + extra), list(spans) + extra_spans
 
 
+_VALUE = re.compile(r"\d+(?:[.,/]\d+)*")
+
+
+def _value_clause(flag: Flag, patterns, shown: str) -> tuple[str, list[tuple[int, int]]] | None:
+    """The clause naming the item, when it holds a value the facts do not show (a blood pressure
+    of 185/110 mmHg next to a fact that only says "hypertensive Krise")."""
+    text, spans = _from_text(flag, patterns)
+    values = set(_VALUE.findall(text))
+    if not spans or not values or not _hits(text, patterns) or values <= set(_VALUE.findall(shown)):
+        return None
+    return text, spans
+
+
 def keyword_for(flag: Flag, facts, patterns) -> tuple[str, list[tuple[int, int]]]:
     found = _from_facts(flag, facts, patterns)
     if found:
-        return found
+        extra = _value_clause(flag, patterns, found[0])
+        return (f"{extra[0]}; {found[0]}", extra[1] + found[1]) if extra else found
     if not _hits(flag.text, patterns):
         found = _from_facts(flag, facts, patterns, any_fact=True)
         if found:
@@ -246,7 +270,8 @@ def annotate(rem: RemarkerResult, evidence, tree, docs: dict[str, dict] | None =
     for item in rem.items + rem.custom:
         for f in item.flags:
             facts = evidence.facts_for_segment(f.segment_id) if evidence is not None else []
-            f.keyword, f.highlights = keyword_for(f, facts, item_patterns(tree, item.item_id, f.matched_terms))
+            key, f.highlights = keyword_for(f, facts, item_patterns(tree, item.item_id, f.matched_terms))
+            f.keyword = " ".join(key.split())
     if docs:
         rem.doc_labels = doc_labels(docs)
     return rem
