@@ -21,6 +21,22 @@ browser ── https://<project>.vercel.app ──► Vercel (frontend/, static)
 If Render gives the service a different address (the name was taken), copy it into
 `frontend/vercel.json` (`destination`) and push.
 
+### Optional: a private default patient
+
+The repository only contains the invented sample patient. To open the live demo on another record
+(for example the challenge patient) without putting it into the repository:
+
+1. Locally: `cd backend && python -m app.importer --bundle <patient folder> eval/private/patient-bundle.json`
+   (`eval/private/` is gitignored). This packs `patient.json` and `documents/` into one file.
+2. On Render: service → **Environment** → **Secret Files** → add a file named `patient-bundle.json` and
+   paste the file's content. Secret files never enter the repository; Render mounts them at
+   `/etc/secrets/`.
+3. Redeploy. At startup the server imports the bundle (`IMPORT_BUNDLE` in `render.yaml`) and makes
+   it the default patient: an empty name and date of birth in the UI open it. Without the secret file
+   the sample patient stays the default.
+
+Anyone who has the demo URL can read that record, so only use data you are allowed to show.
+
 Free-plan behaviour: the service sleeps after 15 minutes without requests; the next request wakes
 it in about a minute (it rebuilds the search index). Imported patients live in memory and on the
 temporary disk, so they are gone after a restart. Set `ALLOW_IMPORT=0` to turn uploads off.

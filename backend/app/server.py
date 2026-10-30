@@ -291,10 +291,19 @@ def _main(argv: list[str]) -> int:
     ap.add_argument("--host", default=os.environ.get("HOST", "127.0.0.1"))
     ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", "8000")))
     ap.add_argument("--no-llm", action="store_true")
+    ap.add_argument("--import-bundle", type=Path, default=os.environ.get("IMPORT_BUNDLE"),
+                    help="JSON {files: [{name, text}]} (python -m app.importer --bundle) imported at startup "
+                         "and made the default patient; e.g. a private Render secret file")
     args = ap.parse_args(argv)
     t = time.perf_counter()
     app = App(Path(args.patient) if args.patient else None, use_llm=not args.no_llm)
     app.load_imports()  # records imported before a restart
+    if args.import_bundle and args.import_bundle.is_file():
+        files = json.loads(args.import_bundle.read_text(encoding="utf-8-sig")).get("files", [])
+        report = app.import_files(files)
+        print(f"default patient from bundle: {report['documents']} documents", flush=True)
+    elif args.import_bundle:
+        print(f"no bundle at {args.import_bundle}; the default stays as loaded", flush=True)
     srv = Server((args.host, args.port), make_handler(app))
     docs = sum(len(s.documents) for s in app.patients.values())
     print(f"ready on http://{args.host}:{args.port} ({len(app.patients)} patient(s), {docs} documents, "

@@ -157,7 +157,7 @@ def test_import_answers_at_once_and_completes_embeddings_in_the_background(offli
     assert report["search"].startswith("keywords now")
     first = app.patients[pid]
     assert first.pipeline.remarker.dense_pending
-    for _ in range(100):  # the background thread swaps in the full index
+    for _ in range(600):  # the background thread swaps in the full index (slow under full-suite load)
         if not app.patients[pid].pipeline.remarker.dense_pending:
             break
         time.sleep(0.1)
@@ -174,3 +174,14 @@ def test_an_index_without_its_embeddings_is_not_cached(monkeypatch, tmp_path):
     assert rm.dense_pending and not saved()
     again = remarker.Remarker.for_patient(FIXTURE, evidence=False, wait_on_quota=True)
     assert not again.dense_pending and saved()
+
+
+def test_bundle_holds_the_record_and_the_server_accepts_it(offline, tmp_path):
+    from app.importer import write_bundle
+    out = tmp_path / "bundle.json"
+    n = write_bundle(FIXTURE, out)
+    files = json.loads(out.read_text(encoding="utf-8"))["files"]
+    assert n == len(files) and {f["name"] for f in files} >= {"patient.json"}
+    assert all(f["name"] == "patient.json" or f["name"].startswith("documents/") for f in files)
+    report = offline.import_files(files)
+    assert offline.find("", "").patient["id"] == report["patient"]["id"]

@@ -17,3 +17,5 @@ services:
         sync: false
       - key: ALLOW_IMPORT        # 1 lets visitors upload patient folders; 0 turns it off
         value: "1"
+      - key: IMPORT_BUNDLE       # optional private secret file: imported at startup as the default patient
+        value: /etc/secrets/patient-bundle.json
