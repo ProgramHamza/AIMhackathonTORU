@@ -1,0 +1,57 @@
+{
+  "case_id": "DEV-ALL-01",
+  "split": "development",
+  "review_status": "ai_authored_pending_independent_review",
+  "provenance": "Independently authored ledger and German prose; no official letters or extractor outputs used. Synthetic drug name.",
+  "source_hashes": {
+    "DEV-ALL-01": "2a4dca885a4fa66e2693bdf50c57892a068be4b56c9a97565fa96a2c6a77b109"
+  },
+  "categories": [
+    "demographics",
+    "encounters",
+    "diagnoses",
+    "symptoms",
+    "allergies",
+    "medications",
+    "vitals",
+    "laboratory",
+    "imaging",
+    "functional_tests",
+    "pathology",
+    "procedures",
+    "care_plans",
+    "followups",
+    "medical_history",
+    "family_history",
+    "social_history",
+    "other_clinical"
+  ],
+  "expected_facts": [
+    {
+      "id": "DEV-ALL-01-F1",
+      "fields": {
+        "category": "allergies",
+        "assertion": "affirmed",
+        "subject": "patient",
+        "value": {
+          "kind": "allergy",
+          "substance": "Latex",
+          "reactions": [
+            "Urtikaria",
+            "Juckreiz"
+          ]
+        }
+      },
+      "concepts": [],
+      "evidence": [
+        {
+          "document_id": "DEV-ALL-01",
+          "start": 11,
+          "end": 47,
+          "quote": "Latex-Allergie (Urtikaria, Juckreiz)"
+        }
+      ]
+    }
+  ],
+  "forbidden_claims": []
+}

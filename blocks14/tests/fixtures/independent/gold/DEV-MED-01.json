@@ -1,0 +1,63 @@
+{
+  "case_id": "DEV-MED-01",
+  "split": "development",
+  "review_status": "ai_authored_pending_independent_review",
+  "provenance": "Independently authored ledger and German prose; no official letters or extractor outputs used. Synthetic drug name.",
+  "source_hashes": {
+    "DEV-MED-01": "fddf18aa7ba22a5c73872de54bcfee6de15fd83a72bdc32dbe20a8fe67b320e4"
+  },
+  "categories": [
+    "demographics",
+    "encounters",
+    "diagnoses",
+    "symptoms",
+    "allergies",
+    "medications",
+    "vitals",
+    "laboratory",
+    "imaging",
+    "functional_tests",
+    "pathology",
+    "procedures",
+    "care_plans",
+    "followups",
+    "medical_history",
+    "family_history",
+    "social_history",
+    "other_clinical"
+  ],
+  "expected_facts": [
+    {
+      "id": "DEV-MED-01-F1",
+      "fields": {
+        "category": "medications",
+        "assertion": "affirmed",
+        "subject": "patient",
+        "value": {
+          "kind": "medication",
+          "drug_name": "Testmittel Sigma",
+          "strength": {
+            "value": 12,
+            "unit": "mg"
+          },
+          "schedule": {
+            "morning": 1,
+            "midday": 0,
+            "evening": 0.5,
+            "night": 0
+          }
+        }
+      },
+      "concepts": [],
+      "evidence": [
+        {
+          "document_id": "DEV-MED-01",
+          "start": 60,
+          "end": 100,
+          "quote": "Testmittel Sigma 12 mg oral 1 0 1/2 0 ST"
+        }
+      ]
+    }
+  ],
+  "forbidden_claims": []
+}

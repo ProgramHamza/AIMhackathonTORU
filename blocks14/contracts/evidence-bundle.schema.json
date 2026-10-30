@@ -1,0 +1,1305 @@
+{
+  "$defs": {
+    "AllergyValue": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "allergy",
+          "title": "Kind",
+          "type": "string"
+        },
+        "substance": {
+          "title": "Substance",
+          "type": "string"
+        },
+        "reactions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reactions",
+          "type": "array"
+        },
+        "severity": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Severity"
+        }
+      },
+      "required": [
+        "kind",
+        "substance"
+      ],
+      "title": "AllergyValue",
+      "type": "object"
+    },
+    "AssertionValue": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "assertion",
+          "title": "Kind",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "site": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Site"
+        },
+        "laterality": {
+          "default": "unspecified",
+          "enum": [
+            "left",
+            "right",
+            "bilateral",
+            "midline",
+            "unspecified"
+          ],
+          "title": "Laterality",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "text"
+      ],
+      "title": "AssertionValue",
+      "type": "object"
+    },
+    "AttributeValue": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "attribute",
+          "title": "Kind",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "value"
+      ],
+      "title": "AttributeValue",
+      "type": "object"
+    },
+    "ClinicalTime": {
+      "additionalProperties": false,
+      "description": "No invented day for partial dates. Relative dates preserve their wording.",
+      "properties": {
+        "precision": {
+          "enum": [
+            "day",
+            "month",
+            "year",
+            "interval",
+            "relative",
+            "unknown"
+          ],
+          "title": "Precision",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        },
+        "end": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "End"
+        },
+        "basis": {
+          "enum": [
+            "explicit",
+            "contextual",
+            "document_fallback",
+            "unknown"
+          ],
+          "title": "Basis",
+          "type": "string"
+        },
+        "original_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Original Text"
+        },
+        "anchor_fact_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Anchor Fact Id"
+        }
+      },
+      "required": [
+        "precision",
+        "basis"
+      ],
+      "title": "ClinicalTime",
+      "type": "object"
+    },
+    "Contradiction": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "laterality",
+            "event_date",
+            "numeric_inconsistency",
+            "status",
+            "other"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "candidate",
+            "accepted",
+            "rejected"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "claim_ids": {
+          "description": "Fact or derived-fact IDs",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 2,
+          "title": "Claim Ids",
+          "type": "array"
+        },
+        "explanation": {
+          "title": "Explanation",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1,
+          "title": "Evidence",
+          "type": "array"
+        },
+        "detector_version": {
+          "title": "Detector Version",
+          "type": "string"
+        },
+        "review_method": {
+          "enum": [
+            "rules",
+            "model",
+            "human"
+          ],
+          "title": "Review Method",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "status",
+        "claim_ids",
+        "explanation",
+        "evidence",
+        "detector_version",
+        "review_method"
+      ],
+      "title": "Contradiction",
+      "type": "object"
+    },
+    "DerivedFact": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "category": {
+          "enum": [
+            "demographics",
+            "encounters",
+            "diagnoses",
+            "symptoms",
+            "allergies",
+            "medications",
+            "vitals",
+            "laboratory",
+            "imaging",
+            "functional_tests",
+            "pathology",
+            "procedures",
+            "care_plans",
+            "followups",
+            "medical_history",
+            "family_history",
+            "social_history",
+            "other_clinical"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "concept": {
+          "title": "Concept",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "calculation": {
+          "enum": [
+            "bmi",
+            "weight_change",
+            "age_at_date"
+          ],
+          "title": "Calculation",
+          "type": "string"
+        },
+        "calculation_version": {
+          "title": "Calculation Version",
+          "type": "string"
+        },
+        "input_fact_ids": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Input Fact Ids",
+          "type": "array"
+        },
+        "result": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "reference_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reference Date"
+        },
+        "explanation": {
+          "title": "Explanation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "category",
+        "concept",
+        "label",
+        "calculation",
+        "calculation_version",
+        "input_fact_ids",
+        "result",
+        "explanation"
+      ],
+      "title": "DerivedFact",
+      "type": "object"
+    },
+    "Document": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "language": {
+          "default": "de",
+          "title": "Language",
+          "type": "string"
+        },
+        "source_kind": {
+          "default": "clinical_document",
+          "enum": [
+            "clinical_document",
+            "patient_metadata"
+          ],
+          "title": "Source Kind",
+          "type": "string"
+        },
+        "source_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Source Sha256",
+          "type": "string"
+        },
+        "document_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Document Date"
+        },
+        "original_text": {
+          "title": "Original Text",
+          "type": "string"
+        },
+        "normalized_text": {
+          "title": "Normalized Text",
+          "type": "string"
+        },
+        "normalization_version": {
+          "title": "Normalization Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "source_sha256",
+        "original_text",
+        "normalized_text",
+        "normalization_version"
+      ],
+      "title": "Document",
+      "type": "object"
+    },
+    "EventValue": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "event",
+          "title": "Kind",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "site": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Site"
+        },
+        "laterality": {
+          "default": "unspecified",
+          "enum": [
+            "left",
+            "right",
+            "bilateral",
+            "midline",
+            "unspecified"
+          ],
+          "title": "Laterality",
+          "type": "string"
+        },
+        "timing_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Timing Text"
+        },
+        "responsible_service": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Responsible Service"
+        },
+        "outcome": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Outcome"
+        }
+      },
+      "required": [
+        "kind",
+        "name"
+      ],
+      "title": "EventValue",
+      "type": "object"
+    },
+    "EvidenceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "passage_id": {
+          "title": "Passage Id",
+          "type": "string"
+        },
+        "start": {
+          "description": "Absolute offset in normalized document",
+          "minimum": 0,
+          "title": "Start",
+          "type": "integer"
+        },
+        "end": {
+          "description": "Exclusive absolute offset",
+          "exclusiveMinimum": 0,
+          "title": "End",
+          "type": "integer"
+        },
+        "quote": {
+          "minLength": 1,
+          "title": "Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "passage_id",
+        "start",
+        "end",
+        "quote"
+      ],
+      "title": "EvidenceRef",
+      "type": "object"
+    },
+    "Fact": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "category": {
+          "enum": [
+            "demographics",
+            "encounters",
+            "diagnoses",
+            "symptoms",
+            "allergies",
+            "medications",
+            "vitals",
+            "laboratory",
+            "imaging",
+            "functional_tests",
+            "pathology",
+            "procedures",
+            "care_plans",
+            "followups",
+            "medical_history",
+            "family_history",
+            "social_history",
+            "other_clinical"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "concept": {
+          "description": "Stable concept key, e.g. body_weight",
+          "minLength": 1,
+          "title": "Concept",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "value": {
+          "discriminator": {
+            "mapping": {
+              "allergy": "#/$defs/AllergyValue",
+              "assertion": "#/$defs/AssertionValue",
+              "attribute": "#/$defs/AttributeValue",
+              "event": "#/$defs/EventValue",
+              "measurement": "#/$defs/MeasurementValue",
+              "medication": "#/$defs/MedicationValue"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/MedicationValue"
+            },
+            {
+              "$ref": "#/$defs/MeasurementValue"
+            },
+            {
+              "$ref": "#/$defs/AllergyValue"
+            },
+            {
+              "$ref": "#/$defs/AssertionValue"
+            },
+            {
+              "$ref": "#/$defs/EventValue"
+            },
+            {
+              "$ref": "#/$defs/AttributeValue"
+            }
+          ],
+          "title": "Value"
+        },
+        "assertion": {
+          "enum": [
+            "affirmed",
+            "negated",
+            "suspected",
+            "uncertain"
+          ],
+          "title": "Assertion",
+          "type": "string"
+        },
+        "clinical_status": {
+          "enum": [
+            "active",
+            "historical",
+            "resolved",
+            "discontinued",
+            "recommended",
+            "planned",
+            "completed",
+            "unknown"
+          ],
+          "title": "Clinical Status",
+          "type": "string"
+        },
+        "subject": {
+          "default": "patient",
+          "enum": [
+            "patient",
+            "family_member"
+          ],
+          "title": "Subject",
+          "type": "string"
+        },
+        "clinical_time": {
+          "$ref": "#/$defs/ClinicalTime"
+        },
+        "event_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Event Id"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1,
+          "title": "Evidence",
+          "type": "array"
+        },
+        "extraction_method": {
+          "enum": [
+            "rule",
+            "llm",
+            "hybrid"
+          ],
+          "title": "Extraction Method",
+          "type": "string"
+        },
+        "extractor_version": {
+          "title": "Extractor Version",
+          "type": "string"
+        },
+        "validation": {
+          "$ref": "#/$defs/Validation"
+        },
+        "related_fact_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Related Fact Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "category",
+        "concept",
+        "label",
+        "value",
+        "assertion",
+        "clinical_status",
+        "clinical_time",
+        "evidence",
+        "extraction_method",
+        "extractor_version",
+        "validation"
+      ],
+      "title": "Fact",
+      "type": "object"
+    },
+    "Manifest": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "bundle_id": {
+          "title": "Bundle Id",
+          "type": "string"
+        },
+        "patient_id": {
+          "title": "Patient Id",
+          "type": "string"
+        },
+        "dataset_kind": {
+          "enum": [
+            "official_synthetic",
+            "independent_synthetic"
+          ],
+          "title": "Dataset Kind",
+          "type": "string"
+        },
+        "evidence_version": {
+          "title": "Evidence Version",
+          "type": "string"
+        },
+        "prepared_at": {
+          "format": "date-time",
+          "title": "Prepared At",
+          "type": "string"
+        },
+        "pipeline_version": {
+          "title": "Pipeline Version",
+          "type": "string"
+        },
+        "configuration_hash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Configuration Hash",
+          "type": "string"
+        },
+        "model_versions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Model Versions",
+          "type": "array"
+        },
+        "status": {
+          "enum": [
+            "complete",
+            "partial"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "offset_unit": {
+          "const": "unicode_code_points",
+          "default": "unicode_code_points",
+          "title": "Offset Unit",
+          "type": "string"
+        },
+        "end_offset_exclusive": {
+          "const": true,
+          "default": true,
+          "title": "End Offset Exclusive",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "bundle_id",
+        "patient_id",
+        "dataset_kind",
+        "evidence_version",
+        "prepared_at",
+        "pipeline_version",
+        "configuration_hash",
+        "status"
+      ],
+      "title": "Manifest",
+      "type": "object"
+    },
+    "MeasurementValue": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "measurement",
+          "title": "Kind",
+          "type": "string"
+        },
+        "quantity": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "site": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Site"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Method"
+        }
+      },
+      "required": [
+        "kind",
+        "quantity"
+      ],
+      "title": "MeasurementValue",
+      "type": "object"
+    },
+    "MedicationValue": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "medication",
+          "title": "Kind",
+          "type": "string"
+        },
+        "drug_name": {
+          "title": "Drug Name",
+          "type": "string"
+        },
+        "generic_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Generic Name"
+        },
+        "normalization_mapping_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Normalization Mapping Id"
+        },
+        "strength": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "dose": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "route": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Route"
+        },
+        "schedule": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Schedule"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "prescription_context": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Prescription Context"
+        }
+      },
+      "required": [
+        "kind",
+        "drug_name"
+      ],
+      "title": "MedicationValue",
+      "type": "object"
+    },
+    "Passage": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "document_id": {
+          "title": "Document Id",
+          "type": "string"
+        },
+        "section": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Section"
+        },
+        "kind": {
+          "enum": [
+            "sentence",
+            "paragraph",
+            "table_row",
+            "heading"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "start": {
+          "minimum": 0,
+          "title": "Start",
+          "type": "integer"
+        },
+        "end": {
+          "exclusiveMinimum": 0,
+          "title": "End",
+          "type": "integer"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "document_id",
+        "kind",
+        "start",
+        "end",
+        "text"
+      ],
+      "title": "Passage",
+      "type": "object"
+    },
+    "ProcessingGap": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "stage": {
+          "enum": [
+            "normalization",
+            "segmentation",
+            "extraction",
+            "validation",
+            "reconciliation"
+          ],
+          "title": "Stage",
+          "type": "string"
+        },
+        "document_ids": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Document Ids",
+          "type": "array"
+        },
+        "passage_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Passage Ids",
+          "type": "array"
+        },
+        "category": {
+          "anyOf": [
+            {
+              "enum": [
+                "demographics",
+                "encounters",
+                "diagnoses",
+                "symptoms",
+                "allergies",
+                "medications",
+                "vitals",
+                "laboratory",
+                "imaging",
+                "functional_tests",
+                "pathology",
+                "procedures",
+                "care_plans",
+                "followups",
+                "medical_history",
+                "family_history",
+                "social_history",
+                "other_clinical"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Category"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "retryable": {
+          "title": "Retryable",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "stage",
+        "document_ids",
+        "reason",
+        "retryable"
+      ],
+      "title": "ProcessingGap",
+      "type": "object"
+    },
+    "Quantity": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "title": "Value",
+          "type": "number"
+        },
+        "unit": {
+          "minLength": 1,
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value",
+        "unit"
+      ],
+      "title": "Quantity",
+      "type": "object"
+    },
+    "Schedule": {
+      "additionalProperties": false,
+      "properties": {
+        "morning": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Morning"
+        },
+        "midday": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Midday"
+        },
+        "evening": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evening"
+        },
+        "night": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Night"
+        },
+        "dose_unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Dose Unit"
+        },
+        "frequency_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Frequency Text"
+        },
+        "as_needed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "As Needed"
+        },
+        "original_text": {
+          "title": "Original Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "original_text"
+      ],
+      "title": "Schedule",
+      "type": "object"
+    },
+    "Validation": {
+      "additionalProperties": false,
+      "properties": {
+        "quote_match": {
+          "const": "passed",
+          "title": "Quote Match",
+          "type": "string"
+        },
+        "field_check": {
+          "enum": [
+            "passed",
+            "not_checked"
+          ],
+          "title": "Field Check",
+          "type": "string"
+        },
+        "semantic_check": {
+          "enum": [
+            "rule_checked",
+            "model_checked",
+            "human_checked",
+            "not_checked"
+          ],
+          "title": "Semantic Check",
+          "type": "string"
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "quote_match",
+        "field_check",
+        "semantic_check"
+      ],
+      "title": "Validation",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "manifest": {
+      "$ref": "#/$defs/Manifest"
+    },
+    "documents": {
+      "items": {
+        "$ref": "#/$defs/Document"
+      },
+      "minItems": 1,
+      "title": "Documents",
+      "type": "array"
+    },
+    "passages": {
+      "items": {
+        "$ref": "#/$defs/Passage"
+      },
+      "title": "Passages",
+      "type": "array"
+    },
+    "facts": {
+      "items": {
+        "$ref": "#/$defs/Fact"
+      },
+      "title": "Facts",
+      "type": "array"
+    },
+    "derived_facts": {
+      "items": {
+        "$ref": "#/$defs/DerivedFact"
+      },
+      "title": "Derived Facts",
+      "type": "array"
+    },
+    "contradictions": {
+      "items": {
+        "$ref": "#/$defs/Contradiction"
+      },
+      "title": "Contradictions",
+      "type": "array"
+    },
+    "processing_gaps": {
+      "items": {
+        "$ref": "#/$defs/ProcessingGap"
+      },
+      "title": "Processing Gaps",
+      "type": "array"
+    }
+  },
+  "required": [
+    "manifest",
+    "documents",
+    "passages",
+    "facts"
+  ],
+  "title": "EvidenceBundle",
+  "type": "object"
+}

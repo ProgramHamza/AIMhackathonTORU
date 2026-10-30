@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clinical Documentation Flowchart</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --text: #1c2430; --muted: #5b6676; --line: #9aa5b5;
+    --rule: #e3f1e7; --rule-b: #4c9a62;
+    --llm: #e6ecfb; --llm-b: #4a6fd1;
+    --code: #fdf1dc; --code-b: #d08a1c;
+    --store: #efe6fa; --store-b: #8a58c9;
+    --out: #fde7e7; --out-b: #cf4a4a;
+    --in: #eceff3; --in-b: #7b8798;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12161c; --panel: #1b212a; --text: #e6eaf0; --muted: #9aa5b5; --line: #556070;
+      --rule: #1c3326; --rule-b: #5fb97a;
+      --llm: #1d2a4d; --llm-b: #7b9bf0;
+      --code: #3a2d12; --code-b: #e0a948;
+      --store: #2c2142; --store-b: #b088ea;
+      --out: #432024; --out-b: #ee7b7b;
+      --in: #252c36; --in-b: #8a96a8;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 18px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0 0 20px; font-size: 13px; color: var(--muted); }
+  .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px;
+    margin-right: 6px; vertical-align: -1px; border: 2px solid; }
+  .l-in::before { background: var(--in); border-color: var(--in-b); }
+  .l-rule::before { background: var(--rule); border-color: var(--rule-b); }
+  .l-llm::before { background: var(--llm); border-color: var(--llm-b); }
+  .l-code::before { background: var(--code); border-color: var(--code-b); }
+  .l-store::before { background: var(--store); border-color: var(--store-b); }
+  .l-out::before { background: var(--out); border-color: var(--out-b); }
+
+  .lanes { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 800px) { .lanes { grid-template-columns: 1fr; } }
+  .lane { background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent);
+    border-radius: 14px; padding: 16px; }
+  .lane h2 { margin: 0 0 2px; font-size: 16px; }
+  .lane .tag { color: var(--muted); font-size: 13px; margin: 0 0 14px; }
+
+  .node { border: 2px solid; border-radius: 10px; padding: 9px 12px; }
+  .node b { display: block; font-size: 14px; }
+  .node small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .in    { background: var(--in);    border-color: var(--in-b); }
+  .rule  { background: var(--rule);  border-color: var(--rule-b); }
+  .llm   { background: var(--llm);   border-color: var(--llm-b); }
+  .code  { background: var(--code);  border-color: var(--code-b); }
+  .store { background: var(--store); border-color: var(--store-b); }
+  .out   { background: var(--out);   border-color: var(--out-b); }
+
+  .arrow { height: 22px; position: relative; }
+  .arrow::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 6px; width: 2px; background: var(--line); transform: translateX(-1px); }
+  .arrow::after { content: ""; position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
+    border: 5px solid transparent; border-top: 7px solid var(--line); border-bottom: 0; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .row.three { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 520px) { .row.three { grid-template-columns: 1fr; } }
+  .branch-label { text-align: center; font-size: 12px; color: var(--muted); margin: 2px 0; }
+
+  .bridge { margin: 20px 0; text-align: center; }
+  .bridge .node { display: inline-block; max-width: 520px; text-align: left; }
+  .bridge .arrow { height: 20px; }
+
+  .notes { margin-top: 22px; background: var(--panel); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent);
+    border-radius: 14px; padding: 14px 16px; font-size: 14px; }
+  .notes h3 { margin: 0 0 6px; font-size: 14px; }
+  .notes ul { margin: 0; padding-left: 18px; }
+  .notes li { margin: 3px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Clinical Documentation Screen: flowchart</h1>
+  <p class="sub">Models find and understand facts. Only verified facts with an exact source quote reach the screen.</p>
+
+  <div class="legend">
+    <span class="l-in">Input / output of a stage</span>
+    <span class="l-rule">Rules / lexicons (no model)</span>
+    <span class="l-llm">Language model or embedding model</span>
+    <span class="l-code">Check in plain code</span>
+    <span class="l-store">Stored data</span>
+    <span class="l-out">What the clinician sees</span>
+  </div>
+
+  <div class="lanes">
+    <!-- OFFLINE -->
+    <section class="lane" aria-labelledby="off">
+      <h2 id="off">Offline: once per patient or new document</h2>
+      <p class="tag">Heavy work happens here so queries stay fast.</p>
+
+      <div class="node in"><b>8 German clinical documents</b><small>discharge letters, reports, consults</small></div>
+      <div class="arrow"></div>
+      <div class="node rule"><b>1. Segmenter</b><small>sentences and table rows with stable IDs and character offsets</small></div>
+      <div class="arrow"></div>
+      <div class="branch-label">two extraction paths</div>
+      <div class="row">
+        <div class="node rule"><b>2a. Rule extractors</b><small>vitals, TNM, Ki-67, medication rows, allergies, abbreviations</small></div>
+        <div class="node llm"><b>2b. LLM extractor</b><small>diagnoses and status, findings, follow-ups. Output: value, status, date, verbatim quote</small></div>
+      </div>
+      <div class="arrow"></div>
+      <div class="node code"><b>3. Verifier</b><small>quote must be an exact substring of the document. Otherwise retry once, then drop</small></div>
+      <div class="arrow"></div>
+      <div class="row">
+        <div class="node code"><b>4. Derived values</b><small>BMI, weight change, generic drug names. Linked to every source passage</small></div>
+        <div class="node rule"><b>5. Contradiction finder</b><small>conflicting values, time-aware, tolerances. Optional LLM judge on flagged pairs</small></div>
+      </div>
+      <div class="arrow"></div>
+      <div class="node llm"><b>6. Sentence embeddings</b><small>for the live fallback search</small></div>
+    </section>
+
+    <!-- ONLINE -->
+    <section class="lane" aria-labelledby="on">
+      <h2 id="on">Online: per query, target under 10 s</h2>
+      <p class="tag">Role + task in, one screen out.</p>
+
+      <div class="node in"><b>"anaesthetist, pre-operative check before breast surgery"</b></div>
+      <div class="arrow"></div>
+      <div class="node llm"><b>A. Prompt analysis</b><small>keyword taxonomy and embedding match. One small LLM call only for leftover words. Output: role, task, procedure, body part</small></div>
+      <div class="arrow"></div>
+      <div class="node rule"><b>B. Question tree</b><small>fixed questions per role and task: allergies? anticoagulants? EF? kidney function?</small></div>
+      <div class="arrow"></div>
+      <div class="branch-label">for each question</div>
+      <div class="row three">
+        <div class="node store"><b>Stored fact found</b><small>use it</small></div>
+        <div class="node llm"><b>Not stored</b><small>live retrieval: keyword + embeddings, reranker score (RIDX), extractor with quote</small></div>
+        <div class="node out"><b>Nothing found</b><small>"not documented"</small></div>
+      </div>
+      <div class="arrow"></div>
+      <div class="node llm"><b>D. Large record only</b><small>parallel small extractors, then merge</small></div>
+      <div class="arrow"></div>
+      <div class="node llm"><b>E. Big LLM</b><small>orders the facts and writes a short summary that cites fact IDs</small></div>
+      <div class="arrow"></div>
+      <div class="node code"><b>Summary check</b><small>every number and drug name must appear in the cited facts. Unsupported sentences are removed</small></div>
+    </section>
+  </div>
+
+  <div class="bridge">
+    <div class="arrow"></div>
+    <div class="node store"><b>Fact store + contradiction list (cached)</b><small>written by the offline lane, read by the online lane</small></div>
+    <div class="arrow"></div>
+    <div class="node out"><b>F. Screen</b><small>
+      Summary with citations · ranked facts grouped by question, each with a one-click link to the highlighted source passage · "not documented" cards · contradictions panel listing every passage involved</small></div>
+  </div>
+
+  <div class="notes">
+    <h3>Reading the chart</h3>
+    <ul>
+      <li>The offline lane fills the fact store. The online lane reads it and only calls a model for unstored questions and for the summary.</li>
+      <li>Hackathon: model calls go to cloud APIs behind a swappable interface. Hospital: the same pipeline on local servers.</li>
+      <li>Not built: FHIR/HL7 integration. Documents are loaded from files.</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

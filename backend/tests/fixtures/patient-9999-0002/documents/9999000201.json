@@ -1,0 +1,18 @@
+{
+  "metadata": {
+    "id": "9999000201",
+    "title": "Stat. Patientenbrief (Interne)",
+    "version": "1",
+    "date": "2023-11-20",
+    "type": "Arztbrief(Inter.)",
+    "group": "Befund",
+    "division": "Innere Medizin - Pneumologie",
+    "hospital": "Testklinikum Süd",
+    "department": "2. Medizinische Abteilung",
+    "admission": {
+      "id": "9999-0102",
+      "type": "inpatient"
+    }
+  },
+  "text": "Testklinikum Süd, 2. Medizinische Abteilung<BR>Patient(in): NN_9999-0002<BR>Sehr geehrte Frau Kollegin, sehr geehrter Herr Kollege!<BR>Wir berichten über den stationären Aufenthalt von Herrn NN_9999-0002, geb. am 11.02.1948, vom 16.11.2023 bis 20.11.2023.<BR>Diagnosen:<BR>Infektexazerbation einer COPD GOLD 3, Gruppe E<BR>Vorhofflimmern, permanent, CHA2DS2-VASc-Score 4<BR>Chronische Niereninsuffizienz Stadium G3b<BR>Arterielle Hypertonie<BR>Diabetes mellitus Typ 2, nicht insulinpflichtig<BR>Allergien:<BR>Penicillin-Allergie (generalisiertes Exanthem 2009)<BR>Anamnese:<BR>Der Patient wurde wegen zunehmender Atemnot und gelblichem Auswurf seit 4 Tagen aufgenommen. Raucheranamnese 45 pack years, Nichtraucher seit 2019.<BR>Status bei Aufnahme:<BR>RR 145/85 mmHg, HF 88/min arrhythmisch, SpO2 89% unter Raumluft, Temperatur 37.9°C<BR>Größe: 176 cm, Gewicht: 82 kg<BR>Verlauf:<BR>Unter Therapie mit Prednisolon 40 mg für 5 Tage, inhalativer Bronchodilatation und Doxycyclin (Penicillin-Allergie) besserte sich die Atemnot rasch.<BR>Die Antikoagulation mit Marcoumar wurde fortgeführt, INR bei Entlassung 2,6.<BR>Echokardiographisch zeigte sich eine leicht reduzierte linksventrikuläre Funktion mit einer EF von 55%.<BR>Labor:<BR>Kreatinin 1,8 mg/dl, eGFR 38 ml/min/1,73m², Kalium 5,1 mmol/l, HbA1c 7,2%, CRP 48 mg/l<BR>Medikation bei Entlassung:<BR>Marcoumar 3mg oral nach INR-Plan<BR>Spiriva 18mcg inhalativ 1 0 0 0<BR>Symbicort 160/4,5 inhalativ 2 0 2 0 Hub<BR>Bisoprolol 5mg oral 1 0 0 0<BR>Ramipril 5mg oral 1 0 0 0<BR>Metformin 500mg oral 1 0 1 0<BR>Furosemid 40mg oral 1 0 0 0<BR>Empfehlungen:<BR>INR-Kontrolle wöchentlich beim Hausarzt, Ziel-INR 2-3.<BR>Kontrolle der Nierenfunktion und des Kaliums in 2 Wochen.<BR>Lungenfunktionsprüfung in 3 Monaten in der pneumologischen Ambulanz.<BR>Bei eGFR unter 30 ml/min ist Metformin abzusetzen.<BR>Mit freundlichen kollegialen Grüßen"
+}

@@ -1,0 +1,540 @@
+{
+  "manifest": {
+    "schema_version": "1.0.0",
+    "bundle_id": "independent-example",
+    "patient_id": "synthetic-example-01",
+    "dataset_kind": "independent_synthetic",
+    "evidence_version": "example-v1",
+    "prepared_at": "2026-10-30T00:00:00Z",
+    "pipeline_version": "contract-example-only",
+    "configuration_hash": "935ad4950b423b1bdb09bca9cff0ce3b50b491b9103263ee93a46091d83613f3",
+    "model_versions": [],
+    "status": "complete",
+    "offset_unit": "unicode_code_points",
+    "end_offset_exclusive": true
+  },
+  "documents": [
+    {
+      "id": "synthetic-d1",
+      "title": "Independent synthetic test letter",
+      "language": "de",
+      "source_kind": "clinical_document",
+      "source_sha256": "5cb847a46201f4f2ef2fb1b96b52c2a9bcdc99f2ea3845e4a0008392b9dad9ba",
+      "document_date": "2024-02-08",
+      "original_text": "Synthetischer Testbrief, 08.02.2024\nGewicht: 86 kg\n",
+      "normalized_text": "Synthetischer Testbrief, 08.02.2024\nGewicht: 86 kg\n",
+      "normalization_version": "identity-fixture-v1"
+    },
+    {
+      "id": "synthetic-d2",
+      "title": "Independent synthetic test letter",
+      "language": "de",
+      "source_kind": "clinical_document",
+      "source_sha256": "747a9cc00fc581ea36d73ee3a3a6f6968f8bdd7ed85521322340a7f4482bb9c9",
+      "document_date": "2024-03-12",
+      "original_text": "Synthetischer Testbrief, 12.03.2024\nHinweis: vollständig erfundener Softwaretest 🧪\nGewicht: 82 kg\nGröße: 180 cm\nBMI: 31,0\nTestpräparat Alpha 8 mg oral 1 0 0,5 0 Tabletten\nKontrolle in zwei Monaten empfohlen.\nKeine Übelkeit.\n",
+      "normalized_text": "Synthetischer Testbrief, 12.03.2024\nHinweis: vollständig erfundener Softwaretest 🧪\nGewicht: 82 kg\nGröße: 180 cm\nBMI: 31,0\nTestpräparat Alpha 8 mg oral 1 0 0,5 0 Tabletten\nKontrolle in zwei Monaten empfohlen.\nKeine Übelkeit.\n",
+      "normalization_version": "identity-fixture-v1"
+    }
+  ],
+  "passages": [
+    {
+      "id": "synthetic-d1:p0",
+      "document_id": "synthetic-d1",
+      "section": null,
+      "kind": "paragraph",
+      "start": 0,
+      "end": 35,
+      "text": "Synthetischer Testbrief, 08.02.2024"
+    },
+    {
+      "id": "synthetic-d1:p1",
+      "document_id": "synthetic-d1",
+      "section": null,
+      "kind": "paragraph",
+      "start": 36,
+      "end": 50,
+      "text": "Gewicht: 86 kg"
+    },
+    {
+      "id": "synthetic-d2:p0",
+      "document_id": "synthetic-d2",
+      "section": null,
+      "kind": "paragraph",
+      "start": 0,
+      "end": 35,
+      "text": "Synthetischer Testbrief, 12.03.2024"
+    },
+    {
+      "id": "synthetic-d2:p1",
+      "document_id": "synthetic-d2",
+      "section": null,
+      "kind": "paragraph",
+      "start": 36,
+      "end": 82,
+      "text": "Hinweis: vollständig erfundener Softwaretest 🧪"
+    },
+    {
+      "id": "synthetic-d2:p2",
+      "document_id": "synthetic-d2",
+      "section": null,
+      "kind": "paragraph",
+      "start": 83,
+      "end": 97,
+      "text": "Gewicht: 82 kg"
+    },
+    {
+      "id": "synthetic-d2:p3",
+      "document_id": "synthetic-d2",
+      "section": null,
+      "kind": "paragraph",
+      "start": 98,
+      "end": 111,
+      "text": "Größe: 180 cm"
+    },
+    {
+      "id": "synthetic-d2:p4",
+      "document_id": "synthetic-d2",
+      "section": null,
+      "kind": "paragraph",
+      "start": 112,
+      "end": 121,
+      "text": "BMI: 31,0"
+    },
+    {
+      "id": "synthetic-d2:p5",
+      "document_id": "synthetic-d2",
+      "section": null,
+      "kind": "paragraph",
+      "start": 122,
+      "end": 170,
+      "text": "Testpräparat Alpha 8 mg oral 1 0 0,5 0 Tabletten"
+    },
+    {
+      "id": "synthetic-d2:p6",
+      "document_id": "synthetic-d2",
+      "section": null,
+      "kind": "paragraph",
+      "start": 171,
+      "end": 207,
+      "text": "Kontrolle in zwei Monaten empfohlen."
+    },
+    {
+      "id": "synthetic-d2:p7",
+      "document_id": "synthetic-d2",
+      "section": null,
+      "kind": "paragraph",
+      "start": 208,
+      "end": 223,
+      "text": "Keine Übelkeit."
+    }
+  ],
+  "facts": [
+    {
+      "id": "weight-old",
+      "category": "vitals",
+      "concept": "body_weight",
+      "label": "body_weight",
+      "value": {
+        "kind": "measurement",
+        "quantity": {
+          "value": 86.0,
+          "unit": "kg"
+        },
+        "site": null,
+        "method": null
+      },
+      "assertion": "affirmed",
+      "clinical_status": "unknown",
+      "subject": "patient",
+      "clinical_time": {
+        "precision": "day",
+        "value": "2024-02-08",
+        "end": null,
+        "basis": "document_fallback",
+        "original_text": null,
+        "anchor_fact_id": null
+      },
+      "event_id": null,
+      "evidence": [
+        {
+          "passage_id": "synthetic-d1:p1",
+          "start": 36,
+          "end": 50,
+          "quote": "Gewicht: 86 kg"
+        }
+      ],
+      "extraction_method": "rule",
+      "extractor_version": "manual-independent-fixture-v1",
+      "validation": {
+        "quote_match": "passed",
+        "field_check": "passed",
+        "semantic_check": "not_checked",
+        "notes": [
+          "Independent contract fixture authored by an AI assistant; not clinician-reviewed."
+        ]
+      },
+      "related_fact_ids": []
+    },
+    {
+      "id": "weight-new",
+      "category": "vitals",
+      "concept": "body_weight",
+      "label": "body_weight",
+      "value": {
+        "kind": "measurement",
+        "quantity": {
+          "value": 82.0,
+          "unit": "kg"
+        },
+        "site": null,
+        "method": null
+      },
+      "assertion": "affirmed",
+      "clinical_status": "unknown",
+      "subject": "patient",
+      "clinical_time": {
+        "precision": "day",
+        "value": "2024-03-12",
+        "end": null,
+        "basis": "document_fallback",
+        "original_text": null,
+        "anchor_fact_id": null
+      },
+      "event_id": null,
+      "evidence": [
+        {
+          "passage_id": "synthetic-d2:p2",
+          "start": 83,
+          "end": 97,
+          "quote": "Gewicht: 82 kg"
+        }
+      ],
+      "extraction_method": "rule",
+      "extractor_version": "manual-independent-fixture-v1",
+      "validation": {
+        "quote_match": "passed",
+        "field_check": "passed",
+        "semantic_check": "not_checked",
+        "notes": [
+          "Independent contract fixture authored by an AI assistant; not clinician-reviewed."
+        ]
+      },
+      "related_fact_ids": []
+    },
+    {
+      "id": "height",
+      "category": "vitals",
+      "concept": "body_height",
+      "label": "body_height",
+      "value": {
+        "kind": "measurement",
+        "quantity": {
+          "value": 180.0,
+          "unit": "cm"
+        },
+        "site": null,
+        "method": null
+      },
+      "assertion": "affirmed",
+      "clinical_status": "unknown",
+      "subject": "patient",
+      "clinical_time": {
+        "precision": "day",
+        "value": "2024-03-12",
+        "end": null,
+        "basis": "document_fallback",
+        "original_text": null,
+        "anchor_fact_id": null
+      },
+      "event_id": null,
+      "evidence": [
+        {
+          "passage_id": "synthetic-d2:p3",
+          "start": 98,
+          "end": 111,
+          "quote": "Größe: 180 cm"
+        }
+      ],
+      "extraction_method": "rule",
+      "extractor_version": "manual-independent-fixture-v1",
+      "validation": {
+        "quote_match": "passed",
+        "field_check": "passed",
+        "semantic_check": "not_checked",
+        "notes": [
+          "Independent contract fixture authored by an AI assistant; not clinician-reviewed."
+        ]
+      },
+      "related_fact_ids": []
+    },
+    {
+      "id": "bmi-stated",
+      "category": "vitals",
+      "concept": "body_mass_index",
+      "label": "body_mass_index",
+      "value": {
+        "kind": "measurement",
+        "quantity": {
+          "value": 31.0,
+          "unit": "kg/m2"
+        },
+        "site": null,
+        "method": null
+      },
+      "assertion": "affirmed",
+      "clinical_status": "unknown",
+      "subject": "patient",
+      "clinical_time": {
+        "precision": "day",
+        "value": "2024-03-12",
+        "end": null,
+        "basis": "document_fallback",
+        "original_text": null,
+        "anchor_fact_id": null
+      },
+      "event_id": null,
+      "evidence": [
+        {
+          "passage_id": "synthetic-d2:p4",
+          "start": 112,
+          "end": 121,
+          "quote": "BMI: 31,0"
+        }
+      ],
+      "extraction_method": "rule",
+      "extractor_version": "manual-independent-fixture-v1",
+      "validation": {
+        "quote_match": "passed",
+        "field_check": "passed",
+        "semantic_check": "not_checked",
+        "notes": [
+          "Independent contract fixture authored by an AI assistant; not clinician-reviewed."
+        ]
+      },
+      "related_fact_ids": []
+    },
+    {
+      "id": "medication",
+      "category": "medications",
+      "concept": "test_preparation_alpha",
+      "label": "test_preparation_alpha",
+      "value": {
+        "kind": "medication",
+        "drug_name": "Testpräparat Alpha",
+        "generic_name": null,
+        "normalization_mapping_id": null,
+        "strength": {
+          "value": 8.0,
+          "unit": "mg"
+        },
+        "dose": null,
+        "route": "oral",
+        "schedule": {
+          "morning": 1.0,
+          "midday": 0.0,
+          "evening": 0.5,
+          "night": 0.0,
+          "dose_unit": "tablet",
+          "frequency_text": null,
+          "as_needed": null,
+          "original_text": "1 0 0,5 0 Tabletten"
+        },
+        "prescription_context": null
+      },
+      "assertion": "affirmed",
+      "clinical_status": "unknown",
+      "subject": "patient",
+      "clinical_time": {
+        "precision": "day",
+        "value": "2024-03-12",
+        "end": null,
+        "basis": "document_fallback",
+        "original_text": null,
+        "anchor_fact_id": null
+      },
+      "event_id": null,
+      "evidence": [
+        {
+          "passage_id": "synthetic-d2:p5",
+          "start": 122,
+          "end": 170,
+          "quote": "Testpräparat Alpha 8 mg oral 1 0 0,5 0 Tabletten"
+        }
+      ],
+      "extraction_method": "rule",
+      "extractor_version": "manual-independent-fixture-v1",
+      "validation": {
+        "quote_match": "passed",
+        "field_check": "passed",
+        "semantic_check": "not_checked",
+        "notes": [
+          "Independent contract fixture authored by an AI assistant; not clinician-reviewed."
+        ]
+      },
+      "related_fact_ids": []
+    },
+    {
+      "id": "followup",
+      "category": "followups",
+      "concept": "clinical_review",
+      "label": "clinical_review",
+      "value": {
+        "kind": "event",
+        "name": "Kontrolle",
+        "site": null,
+        "laterality": "unspecified",
+        "timing_text": "in zwei Monaten",
+        "responsible_service": null,
+        "outcome": null
+      },
+      "assertion": "affirmed",
+      "clinical_status": "recommended",
+      "subject": "patient",
+      "clinical_time": {
+        "precision": "relative",
+        "value": "in zwei Monaten",
+        "end": null,
+        "basis": "explicit",
+        "original_text": "in zwei Monaten",
+        "anchor_fact_id": null
+      },
+      "event_id": null,
+      "evidence": [
+        {
+          "passage_id": "synthetic-d2:p6",
+          "start": 171,
+          "end": 207,
+          "quote": "Kontrolle in zwei Monaten empfohlen."
+        }
+      ],
+      "extraction_method": "rule",
+      "extractor_version": "manual-independent-fixture-v1",
+      "validation": {
+        "quote_match": "passed",
+        "field_check": "passed",
+        "semantic_check": "not_checked",
+        "notes": [
+          "Independent contract fixture authored by an AI assistant; not clinician-reviewed."
+        ]
+      },
+      "related_fact_ids": []
+    },
+    {
+      "id": "nausea",
+      "category": "symptoms",
+      "concept": "nausea",
+      "label": "nausea",
+      "value": {
+        "kind": "assertion",
+        "text": "Keine Übelkeit.",
+        "site": null,
+        "laterality": "unspecified"
+      },
+      "assertion": "negated",
+      "clinical_status": "unknown",
+      "subject": "patient",
+      "clinical_time": {
+        "precision": "day",
+        "value": "2024-03-12",
+        "end": null,
+        "basis": "document_fallback",
+        "original_text": null,
+        "anchor_fact_id": null
+      },
+      "event_id": null,
+      "evidence": [
+        {
+          "passage_id": "synthetic-d2:p7",
+          "start": 208,
+          "end": 223,
+          "quote": "Keine Übelkeit."
+        }
+      ],
+      "extraction_method": "rule",
+      "extractor_version": "manual-independent-fixture-v1",
+      "validation": {
+        "quote_match": "passed",
+        "field_check": "passed",
+        "semantic_check": "not_checked",
+        "notes": [
+          "Independent contract fixture authored by an AI assistant; not clinician-reviewed."
+        ]
+      },
+      "related_fact_ids": []
+    }
+  ],
+  "derived_facts": [
+    {
+      "id": "bmi-calculated",
+      "category": "vitals",
+      "concept": "body_mass_index",
+      "label": "Calculated BMI",
+      "calculation": "bmi",
+      "calculation_version": "bmi-v1",
+      "input_fact_ids": [
+        "weight-new",
+        "height"
+      ],
+      "result": {
+        "value": 25.3,
+        "unit": "kg/m2"
+      },
+      "reference_date": null,
+      "explanation": "82 / (180 / 100)^2, rounded to one decimal"
+    },
+    {
+      "id": "weight-change",
+      "category": "vitals",
+      "concept": "body_weight_change",
+      "label": "Weight change",
+      "calculation": "weight_change",
+      "calculation_version": "difference-v1",
+      "input_fact_ids": [
+        "weight-old",
+        "weight-new"
+      ],
+      "result": {
+        "value": -4.0,
+        "unit": "kg"
+      },
+      "reference_date": null,
+      "explanation": "Later minus earlier recorded weight: 82 - 86"
+    }
+  ],
+  "contradictions": [
+    {
+      "id": "bmi-conflict",
+      "kind": "numeric_inconsistency",
+      "status": "accepted",
+      "claim_ids": [
+        "bmi-stated",
+        "bmi-calculated"
+      ],
+      "explanation": "Recorded BMI differs from calculation using height and weight in the same letter.",
+      "evidence": [
+        {
+          "passage_id": "synthetic-d2:p4",
+          "start": 112,
+          "end": 121,
+          "quote": "BMI: 31,0"
+        },
+        {
+          "passage_id": "synthetic-d2:p2",
+          "start": 83,
+          "end": 97,
+          "quote": "Gewicht: 82 kg"
+        },
+        {
+          "passage_id": "synthetic-d2:p3",
+          "start": 98,
+          "end": 111,
+          "quote": "Größe: 180 cm"
+        }
+      ],
+      "detector_version": "manual-independent-fixture-v1",
+      "review_method": "rules"
+    }
+  ],
+  "processing_gaps": []
+}

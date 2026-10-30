@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "clinical-ui",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "clinical-ui", "run", "dev"],
+      "port": 5173
+    },
+    {
+      "name": "frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "frontend", "run", "dev", "--", "--host", "127.0.0.1", "--port", "4289"],
+      "port": 4289
+    }
+  ]
+}

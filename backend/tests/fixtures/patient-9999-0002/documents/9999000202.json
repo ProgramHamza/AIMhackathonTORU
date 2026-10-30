@@ -1,0 +1,18 @@
+{
+  "metadata": {
+    "id": "9999000202",
+    "title": "Echokardiographie",
+    "version": "1",
+    "date": "2023-11-17",
+    "type": "Sonstiger Befund",
+    "group": "Befund",
+    "division": "Innere Medizin - Kardiologie",
+    "hospital": "Testklinikum Süd",
+    "department": "2. Medizinische Abteilung",
+    "admission": {
+      "id": "9999-0102",
+      "type": "inpatient"
+    }
+  },
+  "text": "Echokardiographie<BR>Fragestellung: LV-Funktion bei Vorhofflimmern?<BR>Befund:<BR>Linker Ventrikel normal groß, global leicht reduzierte systolische Funktion, EF 45%.<BR>Mittelgradige Mitralinsuffizienz.<BR>Linker Vorhof deutlich dilatiert.<BR>Rechter Ventrikel normal, kein Perikarderguss.<BR>Beurteilung: Leicht reduzierte LV-Funktion (EF 45%) bei Vorhofflimmern."
+}

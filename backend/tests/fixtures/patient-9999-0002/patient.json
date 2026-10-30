@@ -1,0 +1,19 @@
+{
+  "id": "9999-0002",
+  "name": "Franz Testmann",
+  "sex": "male",
+  "age": 78,
+  "dateOfBirth": "1948-02-11",
+  "latestAdmission": {
+    "id": "9999-0102",
+    "type": "inpatient",
+    "admission": {
+      "date": "2023-11-16",
+      "time": "10:15:00"
+    },
+    "discharge": {
+      "date": "2023-11-20",
+      "time": "11:00:00"
+    }
+  }
+}

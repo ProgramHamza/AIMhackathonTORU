@@ -1,0 +1,81 @@
+{
+  "case_id": "DEV-TIME-01",
+  "split": "development",
+  "review_status": "ai_authored_pending_independent_review",
+  "provenance": "Independently authored ledger and German prose; no official letters or extractor outputs used. Synthetic drug name.",
+  "source_hashes": {
+    "DEV-TIME-01": "dd8d39dc4f25f0169f44af6643540bfcc80d7f9e61b827e54ccc08fe4d3291e8"
+  },
+  "categories": [
+    "demographics",
+    "encounters",
+    "diagnoses",
+    "symptoms",
+    "allergies",
+    "medications",
+    "vitals",
+    "laboratory",
+    "imaging",
+    "functional_tests",
+    "pathology",
+    "procedures",
+    "care_plans",
+    "followups",
+    "medical_history",
+    "family_history",
+    "social_history",
+    "other_clinical"
+  ],
+  "expected_facts": [
+    {
+      "id": "DEV-TIME-01-F1",
+      "fields": {
+        "category": "encounters",
+        "assertion": "affirmed",
+        "subject": "patient",
+        "clinical_time": {
+          "precision": "day",
+          "value": "2023-09-06",
+          "basis": "explicit"
+        }
+      },
+      "concepts": [
+        "admission",
+        "hospital_admission"
+      ],
+      "evidence": [
+        {
+          "document_id": "DEV-TIME-01",
+          "start": 9,
+          "end": 31,
+          "quote": "Aufnahme am 06.09.2023"
+        }
+      ]
+    },
+    {
+      "id": "DEV-TIME-01-F2",
+      "fields": {
+        "category": "encounters",
+        "assertion": "affirmed",
+        "subject": "patient",
+        "clinical_time": {
+          "precision": "day",
+          "value": "2023-09-08",
+          "basis": "explicit"
+        }
+      },
+      "concepts": [
+        "discharge"
+      ],
+      "evidence": [
+        {
+          "document_id": "DEV-TIME-01",
+          "start": 32,
+          "end": 55,
+          "quote": "Entlassen am 08.09.2023"
+        }
+      ]
+    }
+  ],
+  "forbidden_claims": []
+}

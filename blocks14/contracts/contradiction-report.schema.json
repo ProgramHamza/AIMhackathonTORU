@@ -1,0 +1,354 @@
+{
+  "$defs": {
+    "Assessment": {
+      "additionalProperties": false,
+      "properties": {
+        "contradiction_id": {
+          "title": "Contradiction Id",
+          "type": "string"
+        },
+        "rule": {
+          "enum": [
+            "bmi_same_block",
+            "explicit_same_event_dates",
+            "document_encounter_dates",
+            "summary_laterality"
+          ],
+          "title": "Rule",
+          "type": "string"
+        },
+        "scope": {
+          "title": "Scope",
+          "type": "string"
+        },
+        "requires_review": {
+          "title": "Requires Review",
+          "type": "boolean"
+        },
+        "assumptions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Assumptions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "contradiction_id",
+        "rule",
+        "scope",
+        "requires_review",
+        "assumptions"
+      ],
+      "title": "Assessment",
+      "type": "object"
+    },
+    "Contradiction": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "laterality",
+            "event_date",
+            "numeric_inconsistency",
+            "status",
+            "other"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "candidate",
+            "accepted",
+            "rejected"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "claim_ids": {
+          "description": "Fact or derived-fact IDs",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 2,
+          "title": "Claim Ids",
+          "type": "array"
+        },
+        "explanation": {
+          "title": "Explanation",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1,
+          "title": "Evidence",
+          "type": "array"
+        },
+        "detector_version": {
+          "title": "Detector Version",
+          "type": "string"
+        },
+        "review_method": {
+          "enum": [
+            "rules",
+            "model",
+            "human"
+          ],
+          "title": "Review Method",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "status",
+        "claim_ids",
+        "explanation",
+        "evidence",
+        "detector_version",
+        "review_method"
+      ],
+      "title": "Contradiction",
+      "type": "object"
+    },
+    "DerivedFact": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "category": {
+          "enum": [
+            "demographics",
+            "encounters",
+            "diagnoses",
+            "symptoms",
+            "allergies",
+            "medications",
+            "vitals",
+            "laboratory",
+            "imaging",
+            "functional_tests",
+            "pathology",
+            "procedures",
+            "care_plans",
+            "followups",
+            "medical_history",
+            "family_history",
+            "social_history",
+            "other_clinical"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "concept": {
+          "title": "Concept",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "calculation": {
+          "enum": [
+            "bmi",
+            "weight_change",
+            "age_at_date"
+          ],
+          "title": "Calculation",
+          "type": "string"
+        },
+        "calculation_version": {
+          "title": "Calculation Version",
+          "type": "string"
+        },
+        "input_fact_ids": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Input Fact Ids",
+          "type": "array"
+        },
+        "result": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "reference_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reference Date"
+        },
+        "explanation": {
+          "title": "Explanation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "category",
+        "concept",
+        "label",
+        "calculation",
+        "calculation_version",
+        "input_fact_ids",
+        "result",
+        "explanation"
+      ],
+      "title": "DerivedFact",
+      "type": "object"
+    },
+    "Diagnostic": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "fact_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Fact Ids",
+          "type": "array"
+        },
+        "explanation": {
+          "title": "Explanation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "fact_ids",
+        "explanation"
+      ],
+      "title": "Diagnostic",
+      "type": "object"
+    },
+    "EvidenceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "passage_id": {
+          "title": "Passage Id",
+          "type": "string"
+        },
+        "start": {
+          "description": "Absolute offset in normalized document",
+          "minimum": 0,
+          "title": "Start",
+          "type": "integer"
+        },
+        "end": {
+          "description": "Exclusive absolute offset",
+          "exclusiveMinimum": 0,
+          "title": "End",
+          "type": "integer"
+        },
+        "quote": {
+          "minLength": 1,
+          "title": "Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "passage_id",
+        "start",
+        "end",
+        "quote"
+      ],
+      "title": "EvidenceRef",
+      "type": "object"
+    },
+    "Quantity": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "title": "Value",
+          "type": "number"
+        },
+        "unit": {
+          "minLength": 1,
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value",
+        "unit"
+      ],
+      "title": "Quantity",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "detector_version": {
+      "default": "contradictions-v1",
+      "title": "Detector Version",
+      "type": "string"
+    },
+    "source_evidence_version": {
+      "title": "Source Evidence Version",
+      "type": "string"
+    },
+    "source_bundle_sha256": {
+      "title": "Source Bundle Sha256",
+      "type": "string"
+    },
+    "derived_facts": {
+      "items": {
+        "$ref": "#/$defs/DerivedFact"
+      },
+      "title": "Derived Facts",
+      "type": "array"
+    },
+    "contradictions": {
+      "items": {
+        "$ref": "#/$defs/Contradiction"
+      },
+      "title": "Contradictions",
+      "type": "array"
+    },
+    "assessments": {
+      "items": {
+        "$ref": "#/$defs/Assessment"
+      },
+      "title": "Assessments",
+      "type": "array"
+    },
+    "diagnostics": {
+      "items": {
+        "$ref": "#/$defs/Diagnostic"
+      },
+      "title": "Diagnostics",
+      "type": "array"
+    }
+  },
+  "required": [
+    "source_evidence_version",
+    "source_bundle_sha256"
+  ],
+  "title": "ContradictionReport",
+  "type": "object"
+}

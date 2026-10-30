@@ -1,0 +1,10 @@
+{
+  "case_id": "DATE-02",
+  "split": "development",
+  "review_status": "ai_authored_pending_independent_review",
+  "source_hashes": {
+    "d0": "a0d9794a1fad26e2d2d6a253e33de9e4aac53c609a2e5db1a55e2329946af6b3"
+  },
+  "expected_findings": [],
+  "scope": "Bounded rules only. Candidate means review-needed, never an accepted contradiction. No model extraction accuracy claim."
+}

@@ -1,0 +1,10 @@
+{
+  "case_id": "BMI-07",
+  "split": "development",
+  "review_status": "ai_authored_pending_independent_review",
+  "source_hashes": {
+    "d0": "3d5ac3e995529e3fb56e6d7e444b1200eb2f482d9cec96d44046cbb4132e44ed"
+  },
+  "expected_findings": [],
+  "scope": "Bounded rules only. Candidate means review-needed, never an accepted contradiction. No model extraction accuracy claim."
+}

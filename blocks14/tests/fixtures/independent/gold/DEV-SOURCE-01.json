@@ -1,0 +1,84 @@
+{
+  "case_id": "DEV-SOURCE-01",
+  "split": "development",
+  "review_status": "ai_authored_pending_independent_review",
+  "provenance": "Independently authored ledger and German prose; no official letters or extractor outputs used. Synthetic drug name.",
+  "source_hashes": {
+    "DEV-SOURCE-01": "f622352473784449ee0a37bd73524dafe67fa74a1addc47d7ca561eeb5dca749"
+  },
+  "categories": [
+    "demographics",
+    "encounters",
+    "diagnoses",
+    "symptoms",
+    "allergies",
+    "medications",
+    "vitals",
+    "laboratory",
+    "imaging",
+    "functional_tests",
+    "pathology",
+    "procedures",
+    "care_plans",
+    "followups",
+    "medical_history",
+    "family_history",
+    "social_history",
+    "other_clinical"
+  ],
+  "expected_facts": [
+    {
+      "id": "DEV-SOURCE-01-F1",
+      "fields": {
+        "category": "vitals",
+        "assertion": "affirmed",
+        "subject": "patient",
+        "value": {
+          "kind": "measurement",
+          "quantity": {
+            "value": 71.4,
+            "unit": "kg"
+          }
+        }
+      },
+      "concepts": [
+        "body_weight"
+      ],
+      "evidence": [
+        {
+          "document_id": "DEV-SOURCE-01",
+          "start": 11,
+          "end": 27,
+          "quote": "Gewicht: 71,4 kg"
+        }
+      ]
+    },
+    {
+      "id": "DEV-SOURCE-01-F2",
+      "fields": {
+        "category": "vitals",
+        "assertion": "affirmed",
+        "subject": "patient",
+        "value": {
+          "kind": "measurement",
+          "quantity": {
+            "value": 71.4,
+            "unit": "kg"
+          }
+        }
+      },
+      "concepts": [
+        "body_weight"
+      ],
+      "evidence": [
+        {
+          "document_id": "DEV-SOURCE-01",
+          "start": 40,
+          "end": 56,
+          "quote": "Gewicht: 71,4 kg"
+        }
+      ]
+    }
+  ],
+  "forbidden_claims": []
+}

@@ -1,0 +1,60 @@
+{
+  "case_id": "DEV-ALL-02",
+  "split": "development",
+  "review_status": "ai_authored_pending_independent_review",
+  "provenance": "Independently authored ledger and German prose; no official letters or extractor outputs used. Synthetic drug name.",
+  "source_hashes": {
+    "DEV-ALL-02": "7f0c861bfa47e24e176d2d45d56b95be1d986545a73b3796c2fbea06046aa4c9"
+  },
+  "categories": [
+    "demographics",
+    "encounters",
+    "diagnoses",
+    "symptoms",
+    "allergies",
+    "medications",
+    "vitals",
+    "laboratory",
+    "imaging",
+    "functional_tests",
+    "pathology",
+    "procedures",
+    "care_plans",
+    "followups",
+    "medical_history",
+    "family_history",
+    "social_history",
+    "other_clinical"
+  ],
+  "expected_facts": [
+    {
+      "id": "DEV-ALL-02-F1",
+      "fields": {
+        "category": "allergies",
+        "assertion": "negated",
+        "subject": "patient",
+        "value": {
+          "kind": "allergy"
+        }
+      },
+      "concepts": [],
+      "evidence": [
+        {
+          "document_id": "DEV-ALL-02",
+          "start": 11,
+          "end": 37,
+          "quote": "Keine bekannten Allergien."
+        }
+      ]
+    }
+  ],
+  "forbidden_claims": [
+    {
+      "id": "no-positive-allergy",
+      "fields": {
+        "category": "allergies",
+        "assertion": "affirmed"
+      }
+    }
+  ]
+}

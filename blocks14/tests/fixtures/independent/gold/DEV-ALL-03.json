@@ -1,0 +1,38 @@
+{
+  "case_id": "DEV-ALL-03",
+  "split": "development",
+  "review_status": "ai_authored_pending_independent_review",
+  "provenance": "Independently authored ledger and German prose; no official letters or extractor outputs used. Synthetic drug name.",
+  "source_hashes": {
+    "DEV-ALL-03": "417fcd48c7df4988c6b3854715632992db70c478e409ec745af19bad3be4b194"
+  },
+  "categories": [
+    "demographics",
+    "encounters",
+    "diagnoses",
+    "symptoms",
+    "allergies",
+    "medications",
+    "vitals",
+    "laboratory",
+    "imaging",
+    "functional_tests",
+    "pathology",
+    "procedures",
+    "care_plans",
+    "followups",
+    "medical_history",
+    "family_history",
+    "social_history",
+    "other_clinical"
+  ],
+  "expected_facts": [],
+  "forbidden_claims": [
+    {
+      "id": "absence-is-not-negative-allergy",
+      "fields": {
+        "category": "allergies"
+      }
+    }
+  ]
+}

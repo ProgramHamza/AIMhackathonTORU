@@ -1,0 +1,171 @@
+{
+  "$defs": {
+    "CategoryChange": {
+      "additionalProperties": false,
+      "properties": {
+        "fact_id": {
+          "title": "Fact Id",
+          "type": "string"
+        },
+        "original_category": {
+          "enum": [
+            "demographics",
+            "encounters",
+            "diagnoses",
+            "symptoms",
+            "allergies",
+            "medications",
+            "vitals",
+            "laboratory",
+            "imaging",
+            "functional_tests",
+            "pathology",
+            "procedures",
+            "care_plans",
+            "followups",
+            "medical_history",
+            "family_history",
+            "social_history",
+            "other_clinical"
+          ],
+          "title": "Original Category",
+          "type": "string"
+        },
+        "presentation_category": {
+          "enum": [
+            "demographics",
+            "encounters",
+            "diagnoses",
+            "symptoms",
+            "allergies",
+            "medications",
+            "vitals",
+            "laboratory",
+            "imaging",
+            "functional_tests",
+            "pathology",
+            "procedures",
+            "care_plans",
+            "followups",
+            "medical_history",
+            "family_history",
+            "social_history",
+            "other_clinical"
+          ],
+          "title": "Presentation Category",
+          "type": "string"
+        },
+        "rule": {
+          "const": "recommended_or_planned_procedure_is_care_plan",
+          "default": "recommended_or_planned_procedure_is_care_plan",
+          "title": "Rule",
+          "type": "string"
+        }
+      },
+      "required": [
+        "fact_id",
+        "original_category",
+        "presentation_category"
+      ],
+      "title": "CategoryChange",
+      "type": "object"
+    },
+    "FactGroup": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "representative_fact_id": {
+          "title": "Representative Fact Id",
+          "type": "string"
+        },
+        "source_fact_ids": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Source Fact Ids",
+          "type": "array"
+        },
+        "category": {
+          "enum": [
+            "demographics",
+            "encounters",
+            "diagnoses",
+            "symptoms",
+            "allergies",
+            "medications",
+            "vitals",
+            "laboratory",
+            "imaging",
+            "functional_tests",
+            "pathology",
+            "procedures",
+            "care_plans",
+            "followups",
+            "medical_history",
+            "family_history",
+            "social_history",
+            "other_clinical"
+          ],
+          "title": "Category",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "representative_fact_id",
+        "source_fact_ids",
+        "category"
+      ],
+      "title": "FactGroup",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "reconciliation_version": {
+      "default": "reconciliation-v1",
+      "title": "Reconciliation Version",
+      "type": "string"
+    },
+    "source_evidence_version": {
+      "title": "Source Evidence Version",
+      "type": "string"
+    },
+    "source_bundle_sha256": {
+      "title": "Source Bundle Sha256",
+      "type": "string"
+    },
+    "groups": {
+      "items": {
+        "$ref": "#/$defs/FactGroup"
+      },
+      "title": "Groups",
+      "type": "array"
+    },
+    "category_changes": {
+      "items": {
+        "$ref": "#/$defs/CategoryChange"
+      },
+      "title": "Category Changes",
+      "type": "array"
+    }
+  },
+  "required": [
+    "source_evidence_version",
+    "source_bundle_sha256",
+    "groups",
+    "category_changes"
+  ],
+  "title": "ReconciliationIndex",
+  "type": "object"
+}

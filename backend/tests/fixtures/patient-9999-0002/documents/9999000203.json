@@ -1,0 +1,18 @@
+{
+  "metadata": {
+    "id": "9999000203",
+    "title": "Laborbefund",
+    "version": "1",
+    "date": "2024-02-10",
+    "type": "Laborbefund",
+    "group": "Befund",
+    "division": "Zentrallabor",
+    "hospital": "Testklinikum Süd",
+    "department": "2. Medizinische Abteilung",
+    "admission": {
+      "id": "9999-0102",
+      "type": "inpatient"
+    }
+  },
+  "text": "Laborbefund<BR>Kreatinin 2,1 mg/dl (erhöht)<BR>eGFR 31 ml/min/1,73m²<BR>Kalium 5,4 mmol/l (erhöht)<BR>INR 3,4 (über Zielbereich)<BR>Hämoglobin 12,1 g/dl<BR>HbA1c 7,0%"
+}

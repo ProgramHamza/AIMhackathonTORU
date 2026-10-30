@@ -1,0 +1,18 @@
+{
+  "metadata": {
+    "id": "9999000204",
+    "title": "Ambulanter Patientenbrief",
+    "version": "1",
+    "date": "2024-02-14",
+    "type": "Ambulanzbrief(Inter.)",
+    "group": "Befund",
+    "division": "Innere Medizin - Pneumologie",
+    "hospital": "Testklinikum Süd",
+    "department": "2. Medizinische Abteilung",
+    "admission": {
+      "id": "9999-0102",
+      "type": "inpatient"
+    }
+  },
+  "text": "Pneumologische Ambulanz<BR>Patient(in): NN_9999-0002<BR>Allergien: keine bekannt<BR>Anamnese:<BR>Kontrolle nach Exazerbation. Belastungsdyspnoe nach 1 Stockwerk, keine erneute Exazerbation.<BR>Lungenfunktion:<BR>FEV1 1,32 l (42% des Sollwerts), FEV1/FVC 0,51<BR>Blutgase unter Raumluft: pO2 54 mmHg<BR>Gewicht: 79 kg<BR>Beurteilung:<BR>COPD GOLD 3 mit chronischer respiratorischer Insuffizienz.<BR>Procedere:<BR>Umstellung von Symbicort auf Trimbow 87/5/9 inhalativ 2 0 2 0 Hub.<BR>Einleitung einer Langzeit-Sauerstofftherapie mit 2 l/min, mindestens 16 Stunden pro Tag.<BR>Pneumokokken- und Influenza-Impfung empfohlen.<BR>Nächste Kontrolle in 3 Monaten."
+}

@@ -1,0 +1,110 @@
+{
+  "case_id": "DEV-MEAS-01",
+  "split": "development",
+  "review_status": "ai_authored_pending_independent_review",
+  "provenance": "Independently authored ledger and German prose; no official letters or extractor outputs used. Synthetic drug name.",
+  "source_hashes": {
+    "DEV-MEAS-01": "95b20117c10a966de244a6dc084994ec66c0585e2ae5e720bc01c5b035efb050"
+  },
+  "categories": [
+    "demographics",
+    "encounters",
+    "diagnoses",
+    "symptoms",
+    "allergies",
+    "medications",
+    "vitals",
+    "laboratory",
+    "imaging",
+    "functional_tests",
+    "pathology",
+    "procedures",
+    "care_plans",
+    "followups",
+    "medical_history",
+    "family_history",
+    "social_history",
+    "other_clinical"
+  ],
+  "expected_facts": [
+    {
+      "id": "DEV-MEAS-01-F1",
+      "fields": {
+        "category": "vitals",
+        "assertion": "affirmed",
+        "subject": "patient",
+        "value": {
+          "kind": "measurement",
+          "quantity": {
+            "value": 68.2,
+            "unit": "kg"
+          }
+        }
+      },
+      "concepts": [
+        "body_weight"
+      ],
+      "evidence": [
+        {
+          "document_id": "DEV-MEAS-01",
+          "start": 16,
+          "end": 32,
+          "quote": "Gewicht: 68,2 kg"
+        }
+      ]
+    },
+    {
+      "id": "DEV-MEAS-01-F2",
+      "fields": {
+        "category": "vitals",
+        "assertion": "affirmed",
+        "subject": "patient",
+        "value": {
+          "kind": "measurement",
+          "quantity": {
+            "value": 164,
+            "unit": "cm"
+          }
+        }
+      },
+      "concepts": [
+        "body_height"
+      ],
+      "evidence": [
+        {
+          "document_id": "DEV-MEAS-01",
+          "start": 33,
+          "end": 46,
+          "quote": "Größe: 164 cm"
+        }
+      ]
+    },
+    {
+      "id": "DEV-MEAS-01-F3",
+      "fields": {
+        "category": "vitals",
+        "assertion": "affirmed",
+        "subject": "patient",
+        "value": {
+          "kind": "measurement",
+          "quantity": {
+            "value": 36.8,
+            "unit": "°C"
+          }
+        }
+      },
+      "concepts": [
+        "body_temperature"
+      ],
+      "evidence": [
+        {
+          "document_id": "DEV-MEAS-01",
+          "start": 47,
+          "end": 71,
+          "quote": "Körpertemperatur: 36,8°C"
+        }
+      ]
+    }
+  ],
+  "forbidden_claims": []
+}

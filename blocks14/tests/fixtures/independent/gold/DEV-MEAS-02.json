@@ -1,0 +1,84 @@
+{
+  "case_id": "DEV-MEAS-02",
+  "split": "development",
+  "review_status": "ai_authored_pending_independent_review",
+  "provenance": "Independently authored ledger and German prose; no official letters or extractor outputs used. Synthetic drug name.",
+  "source_hashes": {
+    "DEV-MEAS-02": "e0541e8cc0554bcb6ff0f84ebea6d1c61a1c7df74a11341f4beb0de9a043ada0"
+  },
+  "categories": [
+    "demographics",
+    "encounters",
+    "diagnoses",
+    "symptoms",
+    "allergies",
+    "medications",
+    "vitals",
+    "laboratory",
+    "imaging",
+    "functional_tests",
+    "pathology",
+    "procedures",
+    "care_plans",
+    "followups",
+    "medical_history",
+    "family_history",
+    "social_history",
+    "other_clinical"
+  ],
+  "expected_facts": [
+    {
+      "id": "DEV-MEAS-02-F1",
+      "fields": {
+        "category": "vitals",
+        "assertion": "affirmed",
+        "subject": "patient",
+        "value": {
+          "kind": "measurement",
+          "quantity": {
+            "value": 138,
+            "unit": "mmHg"
+          }
+        }
+      },
+      "concepts": [
+        "systolic_blood_pressure"
+      ],
+      "evidence": [
+        {
+          "document_id": "DEV-MEAS-02",
+          "start": 11,
+          "end": 22,
+          "quote": "138/84 mmHg"
+        }
+      ]
+    },
+    {
+      "id": "DEV-MEAS-02-F2",
+      "fields": {
+        "category": "vitals",
+        "assertion": "affirmed",
+        "subject": "patient",
+        "value": {
+          "kind": "measurement",
+          "quantity": {
+            "value": 84,
+            "unit": "mmHg"
+          }
+        }
+      },
+      "concepts": [
+        "diastolic_blood_pressure"
+      ],
+      "evidence": [
+        {
+          "document_id": "DEV-MEAS-02",
+          "start": 11,
+          "end": 22,
+          "quote": "138/84 mmHg"
+        }
+      ]
+    }
+  ],
+  "forbidden_claims": []
+}

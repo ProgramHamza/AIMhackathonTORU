@@ -1,0 +1,113 @@
+{
+  "version": "1.0.0",
+  "categories": [
+    {
+      "id": "demographics",
+      "label": "Patient details",
+      "scope": "Date of birth, sex and other explicitly recorded identity attributes",
+      "suggested_ui": "patient sidebar"
+    },
+    {
+      "id": "encounters",
+      "label": "Encounters",
+      "scope": "Admission/discharge events, departments and reasons for encounters",
+      "suggested_ui": "timeline / findings"
+    },
+    {
+      "id": "diagnoses",
+      "label": "Diagnoses",
+      "scope": "Confirmed, suspected and negated conditions with status",
+      "suggested_ui": "conditions"
+    },
+    {
+      "id": "symptoms",
+      "label": "Symptoms and episodes",
+      "scope": "Symptoms, onset, course and explicitly documented causal attribution",
+      "suggested_ui": "findings"
+    },
+    {
+      "id": "allergies",
+      "label": "Allergies and reactions",
+      "scope": "Substances, recorded reactions and explicit negative allergy statements",
+      "suggested_ui": "alerts / conditions"
+    },
+    {
+      "id": "medications",
+      "label": "Medications",
+      "scope": "Drug, strength, administered dose, route, schedule and prescription context",
+      "suggested_ui": "medication"
+    },
+    {
+      "id": "vitals",
+      "label": "Vitals and anthropometrics",
+      "scope": "Weight, height, blood pressure components, pulse and temperature",
+      "suggested_ui": "measurement / trend"
+    },
+    {
+      "id": "laboratory",
+      "label": "Laboratory findings",
+      "scope": "Numerical tests and qualitative laboratory findings",
+      "suggested_ui": "measurement / findings"
+    },
+    {
+      "id": "imaging",
+      "label": "Imaging findings",
+      "scope": "Findings, anatomical site and laterality; examination itself is a procedure",
+      "suggested_ui": "findings"
+    },
+    {
+      "id": "functional_tests",
+      "label": "Functional assessments",
+      "scope": "Ejection fraction, rhythm, cognitive or other functional assessments",
+      "suggested_ui": "measurement / findings"
+    },
+    {
+      "id": "pathology",
+      "label": "Pathology and tumour characteristics",
+      "scope": "Histology, staging, grade, receptors and proliferation markers",
+      "suggested_ui": "oncology"
+    },
+    {
+      "id": "procedures",
+      "label": "Procedures and investigations",
+      "scope": "Performed or explicitly not-performed investigations/interventions; negation does not establish completion. Recommended/planned interventions belong to care_plans",
+      "suggested_ui": "procedures"
+    },
+    {
+      "id": "care_plans",
+      "label": "Care plans",
+      "scope": "Recommended or scheduled interventions, timing and responsible service",
+      "suggested_ui": "plan"
+    },
+    {
+      "id": "followups",
+      "label": "Follow-up recommendations",
+      "scope": "Recommended reviews/checks and separately evidenced completion events",
+      "suggested_ui": "followups"
+    },
+    {
+      "id": "medical_history",
+      "label": "Medical and surgical history",
+      "scope": "Explicit historical context and prior operations",
+      "suggested_ui": "conditions / procedures"
+    },
+    {
+      "id": "family_history",
+      "label": "Family history",
+      "scope": "Conditions and negative history concerning relatives, not the patient",
+      "suggested_ui": "conditions / findings"
+    },
+    {
+      "id": "social_history",
+      "label": "Social history and support",
+      "scope": "Documented living situation, support, smoking and alcohol history",
+      "suggested_ui": "findings"
+    },
+    {
+      "id": "other_clinical",
+      "label": "Other clinical information",
+      "scope": "Supported clinical information not yet covered; retain specific concept and wording",
+      "suggested_ui": "findings"
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+@theme {
+  --color-charcoal: #141517;
+  --color-cream: #faf7ee;
+  --color-paper: #fffdf8;
+  --color-ink: #1d1e20;
+  --color-ok: #5f9e5c;
+  --color-bad: #c24848;
+  --font-serif: "Times New Roman", Times, serif;
+}
+
+:root {
+  --noise-light: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .28  0 0 0 0 .22  0 0 0 0 .1  .45 0 0 0 -.12'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  --noise-dark: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 .96  0 0 0 0 .85  .4 0 0 0 -.14'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.4;
+  font-family: "Times New Roman", Times, serif;
+  color: var(--color-ink);
+  background: var(--color-charcoal);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* paper surfaces */
+.paper-dark {
+  background-color: var(--color-charcoal);
+  background-image: var(--noise-dark), radial-gradient(ellipse at 20% 0%, rgba(255, 250, 235, 0.05), transparent 60%);
+  color: var(--color-cream);
+}
+
+.paper-cream {
+  background-color: var(--color-cream);
+  background-image: var(--noise-light);
+  color: var(--color-ink);
+}
+
+.sheet {
+  background-color: var(--color-paper);
+  background-image: var(--noise-light);
+  color: var(--color-ink);
+  box-shadow:
+    0 0 0 1px rgba(70, 55, 30, 0.12),
+    0 1px 2px rgba(60, 45, 20, 0.14),
+    0 8px 18px -12px rgba(60, 45, 20, 0.28);
+}
+
+/* a record sheet with a torn edge: the shadow sits on the wrapper because clip-path would cut it off */
+.sheet-shadow {
+  filter: drop-shadow(0 1px 1px rgba(60, 45, 20, 0.28)) drop-shadow(0 7px 7px rgba(60, 45, 20, 0.14));
+  transition: filter 0.15s;
+}
+.sheet-shadow.is-hit {
+  filter: drop-shadow(0 0 1.5px var(--color-bad)) drop-shadow(0 0 1.5px var(--color-bad))
+    drop-shadow(0 7px 7px rgba(60, 45, 20, 0.14));
+}
+.sheet-rough {
+  background-color: var(--color-paper);
+  background-image:
+    var(--noise-light),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.55), rgba(120, 100, 60, 0.07) 100%);
+  color: var(--color-ink);
+}
+
+.ruled {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 31px,
+    rgba(29, 30, 32, 0.28) 31px,
+    rgba(29, 30, 32, 0.28) 32px
+  );
+  line-height: 32px;
+}
+
+.stamp {
+  display: inline-block;
+  border: 1px solid currentColor;
+  padding: 0 0.45em;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.src {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  opacity: 0.85;
+}
+.src:hover {
+  opacity: 1;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ok);
+  outline-offset: 2px;
+}
+
+mark.hl {
+  background: rgba(137, 209, 133, 0.5);
+  color: inherit;
+  padding: 0 0.1em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

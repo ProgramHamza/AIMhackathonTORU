@@ -1,0 +1,14 @@
+{
+ "metadata": {
+  "id": "90010004",
+  "title": "Langzeit-EKG",
+  "version": "1",
+  "date": "2023-11-17",
+  "type": "Sonstiger Befund",
+  "group": "Befund",
+  "division": "Innere Medizin - Kardiologie",
+  "hospital": "Musterklinikum Süd",
+  "department": "Innere Medizin - Kardiologie"
+ },
+ "text": "Langzeit-EKG<BR>Patientin: NN_9001-0001, geb. 02.09.1957<BR>Fragestellung: Vorhofflimmern?<BR>Befund:<BR>Aufzeichnung über 23 Stunden von guter Qualität. Zwei Episoden von Vorhofflimmern (längste 3 h 10 min), sonst Sinusrhythmus. Mittlere HF 72/min, minimal 51/min, maximal 118/min. Keine Pausen über 2 Sekunden.<BR>Beurteilung:<BR>Paroxysmales Vorhofflimmern.<BR>Dr. Lena Beispiel"
+}

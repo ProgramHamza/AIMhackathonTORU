@@ -1,0 +1,60 @@
+{
+  "case_id": "DEV-EVENT-01",
+  "split": "development",
+  "review_status": "ai_authored_pending_independent_review",
+  "provenance": "Independently authored ledger and German prose; no official letters or extractor outputs used. Synthetic drug name.",
+  "source_hashes": {
+    "DEV-EVENT-01": "de93afb3ed7e111588b8c7684d20601aef42a3d2839ad6f1f2e10db4a0fa2776"
+  },
+  "categories": [
+    "demographics",
+    "encounters",
+    "diagnoses",
+    "symptoms",
+    "allergies",
+    "medications",
+    "vitals",
+    "laboratory",
+    "imaging",
+    "functional_tests",
+    "pathology",
+    "procedures",
+    "care_plans",
+    "followups",
+    "medical_history",
+    "family_history",
+    "social_history",
+    "other_clinical"
+  ],
+  "expected_facts": [
+    {
+      "id": "DEV-EVENT-01-F1",
+      "fields": {
+        "category": "care_plans",
+        "assertion": "affirmed",
+        "subject": "patient",
+        "clinical_status": "recommended",
+        "value": {
+          "kind": "event"
+        }
+      },
+      "concepts": [],
+      "evidence": [
+        {
+          "document_id": "DEV-EVENT-01",
+          "start": 6,
+          "end": 36,
+          "quote": "Eine Koloskopie wird empfohlen"
+        }
+      ]
+    }
+  ],
+  "forbidden_claims": [
+    {
+      "id": "recommendation-not-completed",
+      "fields": {
+        "clinical_status": "completed"
+      }
+    }
+  ]
+}

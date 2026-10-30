@@ -1,0 +1,19 @@
+blocks14/data/
+backend/.cache/
+_incoming_blocks14/
+.env
+backend/.env
+**/__pycache__/
+backend/.venv/
+backend/eval/private/
+frontend/node_modules/
+frontend/dist/
+frontend/src/data/real/
+# never publish the challenge dataset or build output
+data/
+*.zip
+clinical-ui/dist/
+clinical-ui/dist-single/
+clinical-ui/node_modules/
+backend/eval/results/
+clinical-summary-simple.html

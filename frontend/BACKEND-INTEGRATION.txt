@@ -1,0 +1,80 @@
+BACKEND INTEGRATION NOTES
+
+This handoff preserves the current UI; it does not prescribe an API route.
+
+1. PATIENT SEARCH / TASK
+app/src/components/PatientSearch.jsx currently matches bundled patients and
+uses a timed mock search plus local task matching. Replace its submit flow
+with your API request, including patient identity, role and task text. Remove
+the artificial delay. Display actual loading, failure and no-match states.
+App.jsx currently receives onFound(key, picked), then selects a static dataset.
+Change that boundary to store the returned patient/assessment in React state.
+
+2. DATA LOADING
+app/src/data/dataset.js currently exports datasets and allDocuments.
+app/src/data/real/dataset.js imports ../data (relative to app/) at build time;
+curation.js maps that local patient into the frontend shape. Replace this
+fixture path with a backend adapter. Keep the synthetic fixtures for UI tests.
+App.jsx and the source helpers must use the SAME active assessment documents.
+
+3. SOURCE LOOKUP -- IMPORTANT
+app/src/lib/sources.js constructs a module-level Map from allDocuments.
+Merely replacing App state will NOT update this Map. Refactor getDocument,
+getPassage and validateRefs to resolve the active response's document store,
+for example through a React data context. SourceLink and DetailPanel rely on
+these helpers. Clear previous patient's modal/selection on patient changes.
+Use patient-scoped document IDs or composite keys to prevent collisions.
+
+4. EXPECTED UI SHAPE
+Use app/src/data/real/curation.js and the synthetic files under src/data/
+as executable examples; adapt your API response to these shapes:
+
+Dataset: { key, patient, encounter, documents, tasks }
+Patient: { id, givenName, familyName, birthDate: YYYY-MM-DD, sex }
+Task: { id, label, role, curated }
+The curated flag currently gates the important panel. For backend results,
+replace this demo flag with an explicit successful assessment state.
+
+Document: { id, title, type, date: YYYY-MM-DD, department, facility,
+            author?, time?, category?, sections }
+sections: [{ heading?, paragraphs: [[segment, segment, ...], ...] }]
+segment: plain string OR { id: uniquePassageId, text: originalPassageText }
+Citation: { docId, passageIds: [uniquePassageId, ...] }
+An empty passageIds array opens the full document without highlighting.
+
+Encounter includes: clinician {name, specialty, role}, context, asOf,
+important, contradictions, reviewFindings, record, summary, otherHistory.
+Preserve empty arrays for unused lists while validateRefs still expects them.
+See InfoItem.jsx for the important-row contract and inline [text](0) syntax:
+index 0 addresses the item's sources[0] citation; it is not a URL.
+record entries: { id, category, label, detail, when, source }
+source may be null for missing facts. The right sidebar derives categories
+from record.category and groups documents by date, newest first.
+Contradiction entries: { id, code, title, description, reason, severity,
+                         topic, sides: [Citation, Citation, ...] }
+Review findings use the same rendering with kind: 'review' and are separate
+from the counted contradictions.
+
+5. FACTS AND DATES
+Return only document-supported facts; mark missing items 'Not documented'.
+Keep every citation's exact passage IDs resolvable. Contradictions must link
+all conflicting passages; measurements at different times are not inherently
+contradictory. Source documents take precedence over extracted JSON.
+Age is currently calculated from birthDate to today's Europe/Bratislava date;
+record date is separately displayed. Preserve this intentional UI behavior.
+
+6. COMPONENTS
+App.jsx: active assessment, source modal, focus return and keyboard dismissal.
+PatientPanel.jsx: patient details, counted contradictions and review findings.
+ImportantPanel.jsx / InfoItem.jsx: selected facts, temporary scrollbar, arrow.
+MedicalExams.jsx: permanent Documents sidebar, timeline / category modes.
+DetailPanel.jsx: centered source viewer, fixed header, scrollable body,
+exact highlights and contradiction comparison. Preserve focus trapping.
+lib/exams.js: document order and task-source badges derived from citations.
+
+7. VERIFY AFTER CONNECTING
+Search a patient and submit each task; confirm the assessment changes.
+Check missing facts, source highlights, every contradiction's passages,
+category switching, document dates, switching patients and API failures.
+Run all five supplied situations and measure the official challenge metrics;
+the local fixture-reference check is not a clinical correctness evaluation.

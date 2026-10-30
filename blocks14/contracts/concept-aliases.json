@@ -1,0 +1,80 @@
+{
+  "version": "normalization-v1",
+  "aliases": {
+    "birth_date": [
+      "patient_birth_date"
+    ],
+    "admission": [
+      "hospital_admission"
+    ],
+    "discharge": [],
+    "hypertensive_crisis": [
+      "hypertensive_krise"
+    ],
+    "dizziness": [
+      "schwindel"
+    ],
+    "visual_impairment": [
+      "visual_disturbance",
+      "sehbeeintraechtigung",
+      "sehbeeinträchtigung"
+    ],
+    "amaurosis_fugax": [],
+    "carotid_stenosis": [
+      "internal_carotid_artery_stenosis",
+      "stenose_der_a_carotis_sin"
+    ],
+    "hollenhorst_plaques": [],
+    "fundus_hypertonicus": [],
+    "hypertensive_retinopathy": [],
+    "type_2_diabetes_mellitus": [
+      "diabetes_mellitus_type_2",
+      "diabetes_mellitus_typ_ii",
+      "type_2_diabetes_mellitus"
+    ],
+    "gastroesophageal_reflux_disease": [
+      "gerd"
+    ],
+    "systemic_lupus_erythematosus": [
+      "systemischer_lupus_erythematodes"
+    ],
+    "hypercholesterolemia": [
+      "hypercholesterinaemie",
+      "hypercholesterinämie"
+    ],
+    "hyperlipidemia": [
+      "hyperlipidaemie",
+      "hyperlipidämie"
+    ],
+    "hba1c": [],
+    "systolic_blood_pressure": [],
+    "diastolic_blood_pressure": [],
+    "body_height": [],
+    "body_weight": [],
+    "body_mass_index": [],
+    "body_temperature": [],
+    "heart_rate": [],
+    "ejection_fraction": [],
+    "sinus_rhythm": [],
+    "supraventricular_extrasystoles": [],
+    "cholecystectomy": [],
+    "sleep_apnea": [],
+    "osteoporosis": [],
+    "vitamin_d_deficiency": [],
+    "invasive_ductal_breast_carcinoma": [],
+    "breast_cancer": [],
+    "bi_rads": [],
+    "acr": [],
+    "ki67": [],
+    "her2": [],
+    "estrogen_receptor": [],
+    "estrogen_receptor_percent": [],
+    "estrogen_receptor_allred": [],
+    "progesterone_receptor": [],
+    "progesterone_receptor_percent": [],
+    "progesterone_receptor_allred": [],
+    "tumour_stage": [],
+    "specimen_collection": [],
+    "mammography": []
+  }
+}

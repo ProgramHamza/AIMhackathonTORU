@@ -1,0 +1,1140 @@
+# Evaluation cases for block 5 (prompt -> checklist).
+#
+# Labels are written by the team, not by clinicians, and need clinical review.
+# split: dev cases may be used to tune the tree; held-out cases must not be.
+#
+# role_ok : acceptable most-specific roles (any one counts as correct)
+# tasks   : task nodes that must be detected
+# context : context nodes that must be detected
+# top     : items that must be critical or high
+# must    : items that must be on the checklist (any priority)
+# forbid  : items that should not be on the checklist for this request
+#
+# D01-D05 are the challenge situations (title + description as a clinician would type them).
+
+cases:
+  - id: D01
+    split: dev
+    prompt: "Pre-operative anaesthesia check. You are the anaesthetist. She is scheduled for a quadrantectomy (partial removal of the breast) with intraoperative radiotherapy on 16 May 2016."
+    role_ok: [anaesthesiology]
+    tasks: [preop]
+    context: [surgery_planned, region_breast]
+    top: [anticoagulants, allergies, cardiac_function]
+    must: [current_medication, airway_aspiration_risk, previous_anaesthesia]
+    forbid: [tumour_receptors, family_history]
+
+  - id: D02
+    split: dev
+    prompt: "Surgery planning after the tumour board, April 2016. You are the surgeon planning her operation after the tumour board."
+    role_ok: [surgery, breast_surgery]
+    tasks: [surgery_planning, tumour_board]
+    context: []
+    top: [cancer_histology, cancer_staging, tumour_receptors, tumour_board_plan]
+    must: [planned_procedures, anticoagulants]
+    forbid: [eye_findings, fall_risk_mobility]
+
+  - id: D03
+    split: dev
+    prompt: "Diabetes review at the GP. You are her general practitioner (GP), reviewing her diabetes in spring 2016."
+    role_ok: [general_practice]
+    tasks: [chronic_review]
+    context: [focus_diabetes]
+    top: [glucose_lowering, diabetes_control, weight_bmi]
+    must: [kidney_function, blood_pressure]
+    forbid: [tumour_receptors, previous_anaesthesia, airway_aspiration_risk]
+
+  - id: D04
+    split: dev
+    prompt: "Emergency department at night. You are the emergency physician on night duty. She arrives at 02:00 with dizziness and blurred vision in the left eye."
+    role_ok: [emergency_medicine]
+    tasks: [emergency]
+    context: [symptom_neuro_vision]
+    top: [prior_similar_events, anticoagulants, allergies]
+    must: [antihypertensives, contrast_reaction, kidney_function, contrast_relevant_meds, neuro_findings]
+    forbid: [tumour_receptors, family_history]
+
+  - id: D05
+    split: dev
+    prompt: "Open follow-ups from the 2015 hospital stay. You are her GP. You check which follow-ups from her June 2015 hospital stay are still open."
+    role_ok: [general_practice]
+    tasks: [followup_review]
+    context: []
+    top: [followups_recommended, followups_completed]
+    must: [vascular_findings, recent_admissions]
+    forbid: [tumour_receptors, fasting_last_intake]
+
+  - id: D06
+    split: dev
+    prompt: "Gastroenterologist, colonoscopy under sedation tomorrow"
+    role_ok: [gastroenterology]
+    tasks: []
+    context: [anaesthesia_planned]
+    top: [anticoagulants, allergies]
+    must: [coagulation_bleeding, airway_aspiration_risk, current_medication]
+    forbid: [tumour_receptors]
+
+  - id: D07
+    split: dev
+    prompt: "Pulmonologist, COPD exacerbation, should we start steroids?"
+    role_ok: [pulmonology]
+    tasks: []
+    context: []
+    top: [current_medication]
+    must: [steroids_immunosuppressants, diabetes_control, active_problems, allergies]
+    forbid: [tumour_receptors, previous_anaesthesia]
+
+  - id: D08
+    split: dev
+    prompt: "Dentist: tooth extraction planned, is she on blood thinners?"
+    role_ok: [dentistry]
+    tasks: []
+    context: [surgery_planned]
+    top: [anticoagulants]
+    must: [allergies, coagulation_bleeding]
+    forbid: [tumour_receptors, cancer_staging, eye_findings]
+
+  - id: D09
+    split: dev
+    prompt: "Oncologist planning chemotherapy with doxorubicin"
+    role_ok: [oncology]
+    tasks: []
+    context: [focus_cancer]
+    top: [cardiac_function, cancer_histology, cancer_staging]
+    must: [liver_function, allergies, tumour_receptors]
+    forbid: [fasting_last_intake, previous_anaesthesia]
+
+  - id: D10
+    split: dev
+    prompt: "Radiologist, MRI with gadolinium contrast"
+    role_ok: [radiology]
+    tasks: []
+    context: [contrast_planned]
+    top: [contrast_reaction, kidney_function, devices_implants]
+    must: [allergies, pregnancy]
+    forbid: [tumour_receptors, previous_anaesthesia]
+
+  - id: D11
+    split: dev
+    prompt: "Hausärztin, Kontrolle Blutdruck und Medikamente"
+    role_ok: [general_practice]
+    tasks: []
+    context: [focus_hypertension]
+    top: [blood_pressure, antihypertensives]
+    must: [current_medication, kidney_function]
+    forbid: [tumour_receptors]
+
+  - id: D12
+    split: dev
+    prompt: "Notärztin: Patientin gestürzt, nimmt sie Blutverdünner?"
+    role_ok: [emergency_medicine]
+    tasks: []
+    context: [symptom_fall]
+    top: [anticoagulants]
+    must: [fall_risk_mobility, prior_similar_events, allergies]
+    forbid: [tumour_receptors]
+
+  - id: D13
+    split: dev
+    prompt: "anesthesiologist, preop for laparoscopic cholecystectomy"
+    role_ok: [anaesthesiology]
+    tasks: [preop]
+    context: [surgery_planned]
+    top: [allergies, anticoagulants]
+    must: [airway_aspiration_risk, previous_anaesthesia, cardiac_function]
+    forbid: [tumour_receptors]
+
+  - id: D14
+    split: dev
+    prompt: "Nurse admitting her to the ward after the operation"
+    role_ok: [nursing]
+    tasks: []
+    context: []
+    top: [allergies]
+    must: [current_medication, fall_risk_mobility, infection_isolation, vital_signs_latest]
+    forbid: [tumour_receptors, cancer_staging]
+
+  - id: D15
+    split: dev
+    prompt: "Pharmacist doing a medication reconciliation at discharge"
+    role_ok: [pharmacy]
+    tasks: []
+    context: []
+    top: [current_medication, allergies]
+    must: [kidney_function, anticoagulants]
+    forbid: [tumour_receptors, fasting_last_intake]
+
+  - id: D16
+    split: dev
+    prompt: "Cardiologist: palpitations and shortness of breath, check her echo"
+    role_ok: [cardiology]
+    tasks: []
+    context: [symptom_chest]
+    top: [cardiac_function, cardiac_rhythm]
+    must: [anticoagulants, blood_pressure]
+    forbid: [tumour_receptors]
+
+  - id: D17
+    split: dev
+    prompt: "Ophthalmologist, cataract surgery next week, diabetic patient"
+    role_ok: [ophthalmology]
+    tasks: []
+    context: [surgery_planned, focus_diabetes]
+    top: [eye_findings, diabetes_control]
+    must: [anticoagulants, allergies, blood_pressure]
+    forbid: [tumour_receptors]
+
+  - id: D18
+    split: dev
+    prompt: "Neurologist reviewing her TIA work-up"
+    role_ok: [neurology]
+    tasks: []
+    context: []
+    top: [neuro_findings, vascular_findings]
+    must: [anticoagulants, prior_similar_events, blood_pressure]
+    forbid: [tumour_receptors]
+
+  - id: D19
+    split: dev
+    prompt: "Psychiatrist considering lithium"
+    role_ok: [psychiatry]
+    tasks: []
+    context: []
+    top: [kidney_function, current_medication]
+    must: [allergies]
+    forbid: [tumour_receptors, previous_anaesthesia]
+
+  - id: D20
+    split: dev
+    prompt: "radiation oncologist planning breast irradiation"
+    role_ok: [radiation_oncology]
+    tasks: []
+    context: [radiotherapy_planned, region_breast]
+    top: [cancer_histology, cancer_staging]
+    must: [devices_implants, tumour_board_plan]
+    forbid: [fasting_last_intake]
+
+  # ---------------- held-out ----------------
+  - id: H01
+    split: heldout
+    prompt: "Urologist before cystoscopy with biopsy"
+    role_ok: [urology]
+    tasks: []
+    context: []
+    top: [anticoagulants]
+    must: [allergies, kidney_function, coagulation_bleeding]
+    forbid: [tumour_receptors]
+
+  - id: H02
+    split: heldout
+    prompt: "ENT surgeon, tonsillectomy under general anaesthesia"
+    role_ok: [ent]
+    tasks: []
+    context: [surgery_planned, anaesthesia_planned]
+    top: [anticoagulants, allergies]
+    must: [airway_aspiration_risk, coagulation_bleeding, previous_anaesthesia]
+    forbid: [tumour_receptors]
+
+  - id: H03
+    split: heldout
+    prompt: "Dermatologist before starting methotrexate"
+    role_ok: [dermatology]
+    tasks: []
+    context: []
+    top: [liver_function, kidney_function]
+    must: [current_medication, allergies, steroids_immunosuppressants]
+    forbid: [previous_anaesthesia, tumour_receptors]
+
+  - id: H04
+    split: heldout
+    prompt: "Geriatrician: falls review and polypharmacy"
+    role_ok: [geriatrics]
+    tasks: [medication_review]
+    context: [symptom_fall]
+    top: [current_medication, fall_risk_mobility]
+    must: [anticoagulants, cognition_function, kidney_function]
+    forbid: [tumour_receptors]
+
+  - id: H05
+    split: heldout
+    prompt: "ICU doctor admitting her after major bleeding"
+    role_ok: [intensive_care, anaesthesiology]
+    tasks: []
+    context: [symptom_bleeding]
+    top: [anticoagulants, coagulation_bleeding]
+    must: [allergies, active_problems, cardiac_function]
+    forbid: [tumour_receptors]
+
+  - id: H06
+    split: heldout
+    prompt: "GP, annual check-up, she lost weight"
+    role_ok: [general_practice]
+    tasks: [chronic_review]
+    context: []
+    top: [weight_bmi]
+    must: [active_problems, current_medication, followups_recommended]
+    forbid: [previous_anaesthesia]
+
+  - id: H07
+    split: heldout
+    prompt: "Kardiologe vor Herzkatheter mit Kontrastmittel"
+    role_ok: [cardiology]
+    tasks: []
+    context: [contrast_planned, region_heart]
+    top: [contrast_reaction, kidney_function, anticoagulants]
+    must: [contrast_relevant_meds, allergies, cardiac_function]
+    forbid: [tumour_receptors]
+
+  - id: H08
+    split: heldout
+    prompt: "Breast cancer tumour board, medical oncologist"
+    role_ok: [oncology]
+    tasks: [tumour_board]
+    context: [region_breast, focus_cancer]
+    top: [cancer_histology, cancer_staging, tumour_receptors, tumour_board_plan]
+    must: [imaging_findings, family_history]
+    forbid: [fasting_last_intake, previous_anaesthesia]
+
+  - id: H09
+    split: heldout
+    prompt: "Physiotherapist starting mobilisation after surgery"
+    role_ok: [physiotherapy]
+    tasks: []
+    context: []
+    top: [fall_risk_mobility]
+    must: [past_problems_surgeries, vital_signs_latest]
+    forbid: [tumour_receptors, contrast_reaction]
+
+  - id: H10
+    split: heldout
+    prompt: "anaesthetist, spinal anaesthesia for hip replacement"
+    role_ok: [anaesthesiology]
+    tasks: []
+    context: [surgery_planned, anaesthesia_planned]
+    top: [anticoagulants, coagulation_bleeding]
+    must: [allergies, previous_anaesthesia, cardiac_function]
+    forbid: [tumour_receptors]
+
+  - id: H11
+    split: heldout
+    prompt: "Endocrinologist: thyroid nodule, planning an iodine scan"
+    role_ok: [endocrinology]
+    tasks: []
+    context: []
+    top: [current_medication]
+    must: [allergies, imaging_findings]
+    forbid: [previous_anaesthesia]
+
+  - id: H12
+    split: heldout
+    prompt: "Nephrologist reviewing declining kidney function"
+    role_ok: [nephrology]
+    tasks: [chronic_review]
+    context: [region_kidney]
+    top: [kidney_function]
+    must: [current_medication, blood_pressure, diabetes_control, contrast_relevant_meds]
+    forbid: [tumour_receptors]
+
+  - id: H13
+    split: heldout
+    prompt: "emergency physician, chest pain since one hour"
+    role_ok: [emergency_medicine]
+    tasks: []
+    context: [symptom_chest]
+    top: [cardiac_function, anticoagulants, allergies]
+    must: [prior_similar_events, cardiac_rhythm, blood_pressure]
+    forbid: [tumour_receptors]
+
+  - id: H14
+    split: heldout
+    prompt: "Gynaecologist, is she pregnant before the CT?"
+    role_ok: [gynaecology]
+    tasks: []
+    context: []
+    top: [pregnancy]
+    must: [allergies]
+    forbid: [previous_anaesthesia]
+
+  - id: H15
+    split: heldout
+    prompt: "Vascular surgeon planning carotid endarterectomy"
+    role_ok: [vascular_surgery]
+    tasks: []
+    context: [surgery_planned, region_head_neck]
+    top: [vascular_findings, anticoagulants]
+    must: [neuro_findings, cardiac_function, kidney_function]
+    forbid: [tumour_receptors]
+
+  - id: H16
+    split: heldout
+    prompt: "Hausarzt: offene Befunde und Kontrollen nach dem Spitalsaufenthalt"
+    role_ok: [general_practice]
+    tasks: [followup_review]
+    context: []
+    top: [followups_recommended, followups_completed]
+    must: [recent_admissions]
+    forbid: [previous_anaesthesia]
+
+  - id: H17
+    split: heldout
+    prompt: "on-call doctor, she has a fever after the operation"
+    role_ok: [physician]
+    tasks: []
+    context: []
+    top: [allergies]
+    must: [infection_isolation, vital_signs_latest, current_medication, past_problems_surgeries]
+    forbid: [tumour_receptors]
+
+  - id: H18
+    split: heldout
+    prompt: "Anesthetist; pre op eval; pt w/ sleep apnea"
+    role_ok: [anaesthesiology]
+    tasks: [preop]
+    context: []
+    top: [airway_aspiration_risk, allergies, anticoagulants]
+    must: [previous_anaesthesia, cardiac_function, weight_bmi]
+    forbid: [tumour_receptors]
+
+  - id: H19
+    split: heldout
+    prompt: "surgeon, wound check after breast surgery"
+    role_ok: [surgery, breast_surgery]
+    tasks: []
+    context: [region_breast]
+    top: []
+    must: [allergies, anticoagulants, infection_isolation]
+    forbid: [previous_anaesthesia]
+
+  - id: H20
+    split: heldout
+    prompt: "Rheumatologist reviewing her lupus treatment"
+    role_ok: [rheumatology]
+    tasks: [chronic_review]
+    context: []
+    top: [steroids_immunosuppressants, current_medication]
+    must: [kidney_function, lab_results, active_problems]
+    forbid: [previous_anaesthesia, tumour_receptors]
+
+  # ---------------- fresh: written after the graph was frozen, never tuned on ----------------
+  - id: F01
+    split: fresh
+    prompt: "Palliative care doctor, she wants to stop some of her tablets"
+    role_ok: [palliative_care]
+    tasks: []
+    context: []
+    top: [current_medication]
+    must: [active_problems]
+    forbid: [fasting_last_intake]
+
+  - id: F02
+    split: fresh
+    prompt: "Sports medicine: can she be cleared to run a marathon?"
+    role_ok: [sports_medicine]
+    tasks: []
+    context: []
+    top: [cardiac_function]
+    must: [cardiac_rhythm, blood_pressure, current_medication]
+    forbid: [tumour_receptors]
+
+  - id: F03
+    split: fresh
+    prompt: "Occupational health check before she starts night shifts"
+    role_ok: [occupational_medicine]
+    tasks: []
+    context: []
+    top: []
+    must: [current_medication, active_problems]
+    forbid: [tumour_receptors, previous_anaesthesia]
+
+  - id: F04
+    split: fresh
+    prompt: "Hämatologe: Thrombozytopenie, wie hoch ist das Blutungsrisiko?"
+    role_ok: [oncology]
+    tasks: []
+    context: [symptom_bleeding]
+    top: [coagulation_bleeding, anticoagulants]
+    must: [lab_results, current_medication]
+    forbid: [previous_anaesthesia]
+
+  - id: F05
+    split: fresh
+    prompt: "Interventional radiologist placing a port for chemo"
+    role_ok: [radiology]
+    tasks: []
+    context: [systemic_cancer_therapy]
+    top: [anticoagulants, allergies]
+    must: [coagulation_bleeding, contrast_reaction, devices_implants]
+    forbid: [eye_findings]
+
+  - id: F06
+    split: fresh
+    prompt: "Midwife here, is she pregnant?"
+    role_ok: [midwifery]
+    tasks: []
+    context: []
+    top: [pregnancy]
+    must: [allergies, current_medication]
+    forbid: [tumour_receptors]
+
+  - id: F07
+    split: fresh
+    prompt: "GP: she feels tired all the time"
+    role_ok: [general_practice]
+    tasks: []
+    context: []
+    top: []
+    must: [lab_results, diabetes_control, current_medication, active_problems]
+    forbid: [previous_anaesthesia]
+
+  - id: F08
+    split: fresh
+    prompt: "Anästhesie-Sprechstunde vor Schilddrüsen-OP"
+    role_ok: [anaesthesiology]
+    tasks: [preop]
+    context: [surgery_planned]
+    top: [airway_aspiration_risk, allergies, anticoagulants]
+    must: [previous_anaesthesia, cardiac_function]
+    forbid: [tumour_receptors]
+
+  - id: F09
+    split: fresh
+    prompt: "Cardiologist: starting her on apixaban for AF"
+    role_ok: [cardiology]
+    tasks: []
+    context: []
+    top: [anticoagulants, kidney_function]
+    must: [coagulation_bleeding, current_medication, cardiac_rhythm]
+    forbid: [tumour_receptors]
+
+  - id: F10
+    split: fresh
+    prompt: "Wound care nurse, diabetic foot ulcer"
+    role_ok: [nursing]
+    tasks: []
+    context: [focus_diabetes, symptom_infection]
+    top: [diabetes_control]
+    must: [infection_isolation, allergies, vascular_findings]
+    forbid: [tumour_receptors]
+
+  - id: F11
+    split: fresh
+    prompt: "Neurologist: new headache, considering a lumbar puncture"
+    role_ok: [neurology]
+    tasks: []
+    context: [invasive_procedure]
+    top: [anticoagulants]
+    must: [coagulation_bleeding, neuro_findings, imaging_findings]
+    forbid: [tumour_receptors]
+
+  - id: F12
+    split: fresh
+    prompt: "Plastic surgeon, breast reconstruction after mastectomy"
+    role_ok: [plastic_surgery]
+    tasks: []
+    context: [region_breast, surgery_planned]
+    top: [anticoagulants]
+    must: [allergies, cancer_histology, social_history]
+    forbid: [eye_findings]
+
+  - id: F13
+    split: fresh
+    prompt: "Ophthalmologist: sudden painless vision loss in the right eye"
+    role_ok: [ophthalmology]
+    tasks: []
+    context: [symptom_neuro_vision, region_eye]
+    top: [eye_findings]
+    must: [vascular_findings, blood_pressure, anticoagulants, diabetes_control]
+    forbid: [tumour_receptors]
+
+  - id: F14
+    split: fresh
+    prompt: "Infectious disease consult: recurrent UTIs, any antibiotic allergy?"
+    role_ok: [infectiology]
+    tasks: [consult]
+    context: [symptom_infection]
+    top: [allergies]
+    must: [kidney_function, current_medication, infection_isolation, diabetes_control]
+    forbid: [previous_anaesthesia]
+
+  - id: F15
+    split: fresh
+    prompt: "Thoraxchirurg vor Lobektomie"
+    role_ok: [thoracic_surgery]
+    tasks: []
+    context: [surgery_planned]
+    top: [anticoagulants]
+    must: [functional_capacity, imaging_findings, cardiac_function, allergies]
+    forbid: [eye_findings]
+
+  # ---------------- blind: written after the second freeze of the graph, never tuned on ----------------
+  - id: B01
+    split: blind
+    prompt: "Anaesthetist before ERCP under sedation"
+    role_ok: [anaesthesiology]
+    tasks: []
+    context: [anaesthesia_planned, invasive_procedure]
+    top: [anticoagulants, allergies, airway_aspiration_risk]
+    must: [coagulation_bleeding, previous_anaesthesia]
+    forbid: [tumour_receptors]
+
+  - id: B02
+    split: blind
+    prompt: "Hausärztin: Patientin hat seit zwei Wochen Husten und Fieber"
+    role_ok: [general_practice]
+    tasks: []
+    context: [symptom_infection]
+    top: [vital_signs_latest]
+    must: [allergies, current_medication, infection_isolation]
+    forbid: [previous_anaesthesia]
+
+  - id: B03
+    split: blind
+    prompt: "Orthopaedic surgeon, knee replacement next month, she takes alendronate"
+    role_ok: [trauma_orthopaedics]
+    tasks: []
+    context: [surgery_planned]
+    top: [anticoagulants]
+    must: [antiresorptive_drugs, allergies, coagulation_bleeding]
+    forbid: [tumour_receptors]
+
+  - id: B04
+    split: blind
+    prompt: "Gastroenterologist, abnormal liver enzymes"
+    role_ok: [gastroenterology]
+    tasks: []
+    context: []
+    top: [liver_function]
+    must: [current_medication, lab_results]
+    forbid: [previous_anaesthesia]
+
+  - id: B05
+    split: blind
+    prompt: "Night nurse: patient confused and agitated"
+    role_ok: [nursing]
+    tasks: []
+    context: [symptom_neuro_vision]
+    top: [current_medication]
+    must: [cognition_function, vital_signs_latest, fall_risk_mobility]
+    forbid: [tumour_receptors]
+
+  - id: B06
+    split: blind
+    prompt: "Urologist: kidney stones, CT with contrast planned"
+    role_ok: [urology]
+    tasks: []
+    context: [contrast_planned, region_kidney]
+    top: [contrast_reaction, kidney_function]
+    must: [contrast_relevant_meds, allergies]
+    forbid: [previous_anaesthesia]
+
+  - id: B07
+    split: blind
+    prompt: "Endokrinologin, Insulin-Umstellung"
+    role_ok: [endocrinology]
+    tasks: []
+    context: [focus_diabetes]
+    top: [diabetes_control, glucose_lowering]
+    must: [kidney_function, weight_bmi]
+    forbid: [tumour_receptors]
+
+  - id: B08
+    split: blind
+    prompt: "Radiation oncologist reviewing a skin reaction after breast radiotherapy"
+    role_ok: [radiation_oncology]
+    tasks: []
+    context: [radiotherapy_planned, region_breast]
+    top: [cancer_histology]
+    must: [current_medication, allergies]
+    forbid: [fasting_last_intake]
+
+  - id: B09
+    split: blind
+    prompt: "Emergency doctor, she collapsed at home"
+    role_ok: [emergency_medicine]
+    tasks: []
+    context: []
+    top: [anticoagulants, allergies]
+    must: [prior_similar_events, cardiac_rhythm, cardiac_function, current_medication]
+    forbid: [tumour_receptors]
+
+  - id: B10
+    split: blind
+    prompt: "Pharmacist: can she take ibuprofen?"
+    role_ok: [pharmacy]
+    tasks: []
+    context: []
+    top: [current_medication, allergies]
+    must: [kidney_function, anticoagulants]
+    forbid: [previous_anaesthesia]
+
+  - id: B11
+    split: blind
+    prompt: "Cardiac surgeon planning bypass surgery"
+    role_ok: [cardiac_surgery]
+    tasks: []
+    context: [surgery_planned]
+    top: [cardiac_function, anticoagulants]
+    must: [kidney_function, vascular_findings, diabetes_control]
+    forbid: [tumour_receptors]
+
+  - id: B12
+    split: blind
+    prompt: "Psychiatrist: depression, considering an SSRI"
+    role_ok: [psychiatry]
+    tasks: []
+    context: []
+    top: [current_medication]
+    must: [anticoagulants, allergies]
+    forbid: [previous_anaesthesia]
+
+  - id: B13
+    split: blind
+    prompt: "Geriatrie: Sturzabklärung bei Schwindel"
+    role_ok: [geriatrics]
+    tasks: []
+    context: [symptom_fall, symptom_neuro_vision]
+    top: [fall_risk_mobility, anticoagulants]
+    must: [current_medication, blood_pressure, antihypertensives]
+    forbid: [tumour_receptors]
+
+  - id: B14
+    split: blind
+    prompt: "ENT: nosebleed that won't stop"
+    role_ok: [ent]
+    tasks: []
+    context: [symptom_bleeding]
+    top: [anticoagulants, coagulation_bleeding]
+    must: [blood_pressure]
+    forbid: [previous_anaesthesia]
+
+  - id: B15
+    split: blind
+    prompt: "Pulmonologist planning a bronchoscopy with biopsy"
+    role_ok: [pulmonology]
+    tasks: []
+    context: [invasive_procedure]
+    top: [anticoagulants]
+    must: [coagulation_bleeding, allergies, airway_aspiration_risk]
+    forbid: [tumour_receptors]
+
+  # ---------------- blind2: written after the third freeze of the graph, never tuned on ----------------
+  - id: C01
+    split: blind2
+    prompt: "Anaesthetist: emergency caesarean section tonight"
+    role_ok: [anaesthesiology]
+    tasks: []
+    context: [surgery_planned]
+    top: [allergies, anticoagulants, airway_aspiration_risk]
+    must: [fasting_last_intake, previous_anaesthesia, coagulation_bleeding]
+    forbid: [tumour_receptors]
+
+  - id: C02
+    split: blind2
+    prompt: "Kardiologe: Synkope beim Sport"
+    role_ok: [cardiology]
+    tasks: []
+    context: []
+    top: [cardiac_rhythm, cardiac_function]
+    must: [current_medication, prior_similar_events]
+    forbid: [tumour_receptors]
+
+  - id: C03
+    split: blind2
+    prompt: "Diabetologist: recurrent hypoglycaemia at night"
+    role_ok: [endocrinology]
+    tasks: []
+    context: [focus_diabetes]
+    top: [glucose_lowering, diabetes_control]
+    must: [kidney_function, current_medication]
+    forbid: [previous_anaesthesia]
+
+  - id: C04
+    split: blind2
+    prompt: "Vascular surgeon: claudication, planning angioplasty of the leg"
+    role_ok: [vascular_surgery]
+    tasks: []
+    context: [surgery_planned]
+    top: [vascular_findings, anticoagulants]
+    must: [kidney_function, contrast_reaction, diabetes_control]
+    forbid: [tumour_receptors]
+
+  - id: C05
+    split: blind2
+    prompt: "Hospital pharmacist checking her antibiotic dose"
+    role_ok: [pharmacy]
+    tasks: []
+    context: []
+    top: [kidney_function, allergies]
+    must: [current_medication, weight_bmi]
+    forbid: [previous_anaesthesia]
+
+  - id: C06
+    split: blind2
+    prompt: "Neurochirurg vor Bandscheiben-OP, nimmt sie ASS?"
+    role_ok: [neurosurgery]
+    tasks: []
+    context: [surgery_planned]
+    top: [anticoagulants]
+    must: [allergies, coagulation_bleeding, imaging_findings]
+    forbid: [tumour_receptors]
+
+  - id: C07
+    split: blind2
+    prompt: "Oncology nurse before the next chemotherapy cycle"
+    role_ok: [nursing, oncology]
+    tasks: []
+    context: [systemic_cancer_therapy]
+    top: [allergies]
+    must: [lab_results, current_medication, vital_signs_latest]
+    forbid: [fasting_last_intake]
+
+  - id: C08
+    split: blind2
+    prompt: "GP: her blood pressure is high again in home measurements"
+    role_ok: [general_practice]
+    tasks: []
+    context: [focus_hypertension]
+    top: [blood_pressure, antihypertensives]
+    must: [kidney_function, current_medication]
+    forbid: [tumour_receptors]
+
+  - id: C09
+    split: blind2
+    prompt: "Emergency physician: shortness of breath, suspected pulmonary embolism"
+    role_ok: [emergency_medicine]
+    tasks: []
+    context: [symptom_chest]
+    top: [anticoagulants, cardiac_function]
+    must: [kidney_function, contrast_reaction, prior_similar_events]
+    forbid: [tumour_receptors]
+
+  - id: C10
+    split: blind2
+    prompt: "Radiologist, mammography follow-up"
+    role_ok: [radiology]
+    tasks: []
+    context: [region_breast]
+    top: [imaging_findings]
+    must: [cancer_histology]
+    forbid: [previous_anaesthesia]
+
+  - id: C11
+    split: blind2
+    prompt: "Ophthalmologist: diabetic retinopathy check"
+    role_ok: [ophthalmology]
+    tasks: []
+    context: [focus_diabetes]
+    top: [eye_findings, diabetes_control]
+    must: [blood_pressure, kidney_function]
+    forbid: [tumour_receptors]
+
+  - id: C12
+    split: blind2
+    prompt: "Physiotherapist: back pain, can she exercise?"
+    role_ok: [physiotherapy]
+    tasks: []
+    context: []
+    top: [fall_risk_mobility]
+    must: [cardiac_function, past_problems_surgeries]
+    forbid: [tumour_receptors]
+
+  - id: C13
+    split: blind2
+    prompt: "Intensivist: septic shock"
+    role_ok: [intensive_care]
+    tasks: []
+    context: [symptom_infection]
+    top: [allergies, vital_signs_latest]
+    must: [kidney_function, lab_results, devices_implants, current_medication]
+    forbid: [fasting_last_intake]
+
+  - id: C14
+    split: blind2
+    prompt: "Gynäkologin: Kontrolle nach Brustkrebs, Tamoxifen"
+    role_ok: [gynaecology]
+    tasks: []
+    context: [region_breast, focus_cancer]
+    top: [cancer_histology, current_medication]
+    must: [tumour_receptors, imaging_findings]
+    forbid: [previous_anaesthesia]
+
+  - id: C15
+    split: blind2
+    prompt: "Dermatologist: suspicious mole, excision under local anaesthesia"
+    role_ok: [dermatology]
+    tasks: []
+    context: [surgery_planned]
+    top: [anticoagulants, allergies]
+    must: [coagulation_bleeding]
+    forbid: [tumour_receptors]
+
+  # ---------------- blind3: written after the fourth freeze of the graph, never tuned on ----------------
+  - id: E01
+    split: blind3
+    prompt: "Anaesthetist: hernia repair, she uses a CPAP machine at night"
+    role_ok: [anaesthesiology]
+    tasks: []
+    context: [surgery_planned]
+    top: [airway_aspiration_risk, anticoagulants, allergies]
+    must: [previous_anaesthesia, devices_implants]
+    forbid: [tumour_receptors]
+
+  - id: E02
+    split: blind3
+    prompt: "GP: swollen ankles since she started amlodipine"
+    role_ok: [general_practice]
+    tasks: []
+    context: []
+    top: [current_medication, antihypertensives]
+    must: [cardiac_function, kidney_function]
+    forbid: [previous_anaesthesia]
+
+  - id: E03
+    split: blind3
+    prompt: "Emergency: black stools and dizziness"
+    role_ok: [emergency_medicine, physician]
+    tasks: [emergency]
+    context: []
+    top: [anticoagulants, coagulation_bleeding]
+    must: [current_medication, lab_results, vital_signs_latest]
+    forbid: [tumour_receptors]
+
+  - id: E04
+    split: blind3
+    prompt: "Nephrologist: her potassium is high"
+    role_ok: [nephrology]
+    tasks: []
+    context: []
+    top: [kidney_function, current_medication]
+    must: [antihypertensives, lab_results]
+    forbid: [previous_anaesthesia]
+
+  - id: E05
+    split: blind3
+    prompt: "Oncologist: neutropenic fever after chemo"
+    role_ok: [oncology]
+    tasks: []
+    context: [symptom_infection, systemic_cancer_therapy]
+    top: [vital_signs_latest, lab_results, allergies]
+    must: [infection_isolation, devices_implants]
+    forbid: [fasting_last_intake]
+
+  - id: E06
+    split: blind3
+    prompt: "Anästhesistin: Narkose für Magenspiegelung"
+    role_ok: [anaesthesiology]
+    tasks: []
+    context: [anaesthesia_planned]
+    top: [airway_aspiration_risk, allergies]
+    must: [previous_anaesthesia, anticoagulants]
+    forbid: [tumour_receptors]
+
+  - id: E07
+    split: blind3
+    prompt: "Cardiologist: TAVI work-up"
+    role_ok: [cardiology]
+    tasks: []
+    context: []
+    top: [cardiac_function]
+    must: [kidney_function, contrast_reaction, vascular_findings]
+    forbid: [tumour_receptors]
+
+  - id: E08
+    split: blind3
+    prompt: "Nurse: pressure sore on the heel"
+    role_ok: [nursing]
+    tasks: []
+    context: []
+    top: [fall_risk_mobility]
+    must: [diabetes_control, vascular_findings, infection_isolation]
+    forbid: [tumour_receptors]
+
+  - id: E09
+    split: blind3
+    prompt: "Rheumatologist: gout flare, can she take NSAIDs?"
+    role_ok: [rheumatology]
+    tasks: []
+    context: []
+    top: [kidney_function, current_medication]
+    must: [anticoagulants]
+    forbid: [previous_anaesthesia]
+
+  - id: E10
+    split: blind3
+    prompt: "Urologe: Blasenspiegelung, nimmt sie Eliquis?"
+    role_ok: [urology]
+    tasks: []
+    context: [invasive_procedure]
+    top: [anticoagulants]
+    must: [allergies, kidney_function]
+    forbid: [tumour_receptors]
+
+  - id: E11
+    split: blind3
+    prompt: "ENT: hearing loss after gentamicin"
+    role_ok: [ent]
+    tasks: []
+    context: []
+    top: [current_medication, kidney_function]
+    must: [allergies]
+    forbid: [tumour_receptors]
+
+  - id: E12
+    split: blind3
+    prompt: "Pharmacist: QT prolongation risk with her medicines"
+    role_ok: [pharmacy]
+    tasks: []
+    context: []
+    top: [current_medication, cardiac_rhythm]
+    must: [kidney_function]
+    forbid: [previous_anaesthesia]
+
+  # ---------------- blind4: written after the fifth freeze of the graph, never tuned on ----------------
+  - id: G01
+    split: blind4
+    prompt: "Anaesthetist: emergency laparotomy, she had a stroke last year"
+    role_ok: [anaesthesiology]
+    tasks: []
+    context: [surgery_planned]
+    top: [anticoagulants, allergies, airway_aspiration_risk]
+    must: [neuro_findings, previous_anaesthesia, cardiac_function]
+    forbid: [tumour_receptors]
+
+  - id: G02
+    split: blind4
+    prompt: "Hausarzt: Patientin klagt über Herzstolpern"
+    role_ok: [general_practice]
+    tasks: []
+    context: []
+    top: [cardiac_rhythm]
+    must: [current_medication, cardiac_function, blood_pressure]
+    forbid: [previous_anaesthesia]
+
+  - id: G03
+    split: blind4
+    prompt: "Nephrologist: starting dialysis next week"
+    role_ok: [nephrology]
+    tasks: []
+    context: []
+    top: [kidney_function]
+    must: [devices_implants, current_medication, lab_results]
+    forbid: [tumour_receptors]
+
+  - id: G04
+    split: blind4
+    prompt: "Emergency physician: patient vomiting blood"
+    role_ok: [emergency_medicine]
+    tasks: []
+    context: []
+    top: [anticoagulants, coagulation_bleeding]
+    must: [current_medication, lab_results, vital_signs_latest]
+    forbid: [tumour_receptors]
+
+  - id: G05
+    split: blind4
+    prompt: "Cardiologist planning a pacemaker implantation"
+    role_ok: [cardiology]
+    tasks: []
+    context: []
+    top: [anticoagulants, cardiac_rhythm]
+    must: [allergies, coagulation_bleeding, devices_implants]
+    forbid: [tumour_receptors]
+
+  - id: G06
+    split: blind4
+    prompt: "Nurse: patient refuses to eat and is losing weight"
+    role_ok: [nursing]
+    tasks: []
+    context: []
+    top: [weight_bmi]
+    must: [cognition_function, current_medication, active_problems]
+    forbid: [previous_anaesthesia]
+
+  - id: G07
+    split: blind4
+    prompt: "Infectiologist: MRSA in the wound swab"
+    role_ok: [infectiology]
+    tasks: []
+    context: []
+    top: [infection_isolation, allergies]
+    must: [current_medication, kidney_function]
+    forbid: [previous_anaesthesia]
+
+  - id: G08
+    split: blind4
+    prompt: "Ophthalmologist before an intravitreal injection"
+    role_ok: [ophthalmology]
+    tasks: []
+    context: []
+    top: [eye_findings]
+    must: [allergies, diabetes_control]
+    forbid: [tumour_receptors]
+
+  - id: G09
+    split: blind4
+    prompt: "Dermatologist: rash after a new antibiotic"
+    role_ok: [dermatology]
+    tasks: []
+    context: []
+    top: [allergies, current_medication]
+    must: []
+    forbid: [previous_anaesthesia]
+
+  - id: G10
+    split: blind4
+    prompt: "Pharmacist: she is on warfarin and wants to take ibuprofen"
+    role_ok: [pharmacy]
+    tasks: []
+    context: []
+    top: [anticoagulants, current_medication]
+    must: [kidney_function, coagulation_bleeding]
+    forbid: [tumour_receptors]
+
+  - id: G11
+    split: blind4
+    prompt: "Gynaecologist: postmenopausal bleeding"
+    role_ok: [gynaecology]
+    tasks: []
+    context: [symptom_bleeding]
+    top: [anticoagulants]
+    must: [imaging_findings, current_medication]
+    forbid: [previous_anaesthesia]
+
+  - id: G12
+    split: blind4
+    prompt: "Unfallchirurg: Hüftfraktur, OP morgen früh"
+    role_ok: [trauma_orthopaedics]
+    tasks: []
+    context: [surgery_planned]
+    top: [anticoagulants, allergies]
+    must: [coagulation_bleeding, fall_risk_mobility, cardiac_function]
+    forbid: [tumour_receptors]
+
+  - id: G13
+    split: blind4
+    prompt: "Pulmonologist: worsening breathlessness, she is on amiodarone"
+    role_ok: [pulmonology]
+    tasks: []
+    context: []
+    top: [current_medication]
+    must: [cardiac_function, imaging_findings]
+    forbid: [previous_anaesthesia]
+
+  - id: G14
+    split: blind4
+    prompt: "Psychiatrist: starting quetiapine, any heart issues?"
+    role_ok: [psychiatry]
+    tasks: []
+    context: []
+    top: [current_medication, cardiac_rhythm]
+    must: [cardiac_function]
+    forbid: [previous_anaesthesia]
+
+  - id: G15
+    split: blind4
+    prompt: "Endocrinologist: steroid-induced high blood sugar"
+    role_ok: [endocrinology]
+    tasks: []
+    context: [focus_diabetes, steroid_therapy]
+    top: [diabetes_control, glucose_lowering]
+    must: [steroids_immunosuppressants]
+    forbid: [previous_anaesthesia]

@@ -1,0 +1,44 @@
+{
+  "documents": [
+    {
+      "id": "9999000201",
+      "title": "Stat. Patientenbrief (Interne)",
+      "version": "1",
+      "date": "2023-11-20",
+      "type": "Arztbrief(Inter.)",
+      "group": "Befund",
+      "division": "Innere Medizin - Pneumologie",
+      "hospital": "Testklinikum Süd"
+    },
+    {
+      "id": "9999000202",
+      "title": "Echokardiographie",
+      "version": "1",
+      "date": "2023-11-17",
+      "type": "Sonstiger Befund",
+      "group": "Befund",
+      "division": "Innere Medizin - Kardiologie",
+      "hospital": "Testklinikum Süd"
+    },
+    {
+      "id": "9999000203",
+      "title": "Laborbefund",
+      "version": "1",
+      "date": "2024-02-10",
+      "type": "Laborbefund",
+      "group": "Befund",
+      "division": "Zentrallabor",
+      "hospital": "Testklinikum Süd"
+    },
+    {
+      "id": "9999000204",
+      "title": "Ambulanter Patientenbrief",
+      "version": "1",
+      "date": "2024-02-14",
+      "type": "Ambulanzbrief(Inter.)",
+      "group": "Befund",
+      "division": "Innere Medizin - Pneumologie",
+      "hospital": "Testklinikum Süd"
+    }
+  ]
+}

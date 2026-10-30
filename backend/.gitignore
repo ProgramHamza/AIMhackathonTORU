@@ -1,0 +1,8 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+data/tree.compiled.json
+eval/results/
+.cache/
+eval/private/

@@ -1,0 +1,25 @@
+{
+  "case_id": "DATE-01",
+  "split": "development",
+  "review_status": "ai_authored_pending_independent_review",
+  "source_hashes": {
+    "d0": "3279d7ed433e593c7a540aa26b1c4bc9d53520388bac6c079aa6e732c38f25d0"
+  },
+  "expected_findings": [
+    {
+      "kind": "event_date",
+      "status": "candidate",
+      "required_quotes": [
+        {
+          "document_id": "d0",
+          "quote": "Aufnahme am 02.08.2024"
+        },
+        {
+          "document_id": "d0",
+          "quote": "Aufnahme am 04.08.2024"
+        }
+      ]
+    }
+  ],
+  "scope": "Bounded rules only. Candidate means review-needed, never an accepted contradiction. No model extraction accuracy claim."
+}

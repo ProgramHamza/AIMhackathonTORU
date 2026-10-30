@@ -1,0 +1,65 @@
+{
+  "case_id": "DEV-SCOPE-01",
+  "split": "development",
+  "review_status": "ai_authored_pending_independent_review",
+  "provenance": "Independently authored ledger and German prose; no official letters or extractor outputs used. Synthetic drug name.",
+  "source_hashes": {
+    "DEV-SCOPE-01": "6ed3a43c5877b65cead9a3ffa20a0ba6c3d8c87949aad5d06e1d49914788f8ac"
+  },
+  "categories": [
+    "demographics",
+    "encounters",
+    "diagnoses",
+    "symptoms",
+    "allergies",
+    "medications",
+    "vitals",
+    "laboratory",
+    "imaging",
+    "functional_tests",
+    "pathology",
+    "procedures",
+    "care_plans",
+    "followups",
+    "medical_history",
+    "family_history",
+    "social_history",
+    "other_clinical"
+  ],
+  "expected_facts": [
+    {
+      "id": "DEV-SCOPE-01-F1",
+      "fields": {
+        "category": "laboratory",
+        "assertion": "affirmed",
+        "subject": "patient",
+        "value": {
+          "kind": "measurement",
+          "quantity": {
+            "value": 6.8,
+            "unit": "%"
+          }
+        }
+      },
+      "concepts": [
+        "hba1c"
+      ],
+      "evidence": [
+        {
+          "document_id": "DEV-SCOPE-01",
+          "start": 8,
+          "end": 19,
+          "quote": "HbA1c: 6,8%"
+        }
+      ]
+    }
+  ],
+  "forbidden_claims": [
+    {
+      "id": "document-instruction-not-fact",
+      "fields": {
+        "category": "allergies"
+      }
+    }
+  ]
+}

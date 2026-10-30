@@ -1,0 +1,81 @@
+{
+  "case_id": "DEV-NEG-01",
+  "split": "development",
+  "review_status": "ai_authored_pending_independent_review",
+  "provenance": "Independently authored ledger and German prose; no official letters or extractor outputs used. Synthetic drug name.",
+  "source_hashes": {
+    "DEV-NEG-01": "2dcbe78c8f1bdba9127df904947556eb77f52b6882634805d033f888decafa40"
+  },
+  "categories": [
+    "demographics",
+    "encounters",
+    "diagnoses",
+    "symptoms",
+    "allergies",
+    "medications",
+    "vitals",
+    "laboratory",
+    "imaging",
+    "functional_tests",
+    "pathology",
+    "procedures",
+    "care_plans",
+    "followups",
+    "medical_history",
+    "family_history",
+    "social_history",
+    "other_clinical"
+  ],
+  "expected_facts": [
+    {
+      "id": "DEV-NEG-01-F1",
+      "fields": {
+        "category": "symptoms",
+        "assertion": "negated",
+        "subject": "patient"
+      },
+      "concepts": [],
+      "evidence": [
+        {
+          "document_id": "DEV-NEG-01",
+          "start": 10,
+          "end": 24,
+          "quote": "Keine Dyspnoe."
+        }
+      ]
+    },
+    {
+      "id": "DEV-NEG-01-F2",
+      "fields": {
+        "category": "diagnoses",
+        "assertion": "suspected",
+        "subject": "patient"
+      },
+      "concepts": [],
+      "evidence": [
+        {
+          "document_id": "DEV-NEG-01",
+          "start": 39,
+          "end": 62,
+          "quote": "Verdacht auf Pneumonie."
+        }
+      ]
+    }
+  ],
+  "forbidden_claims": [
+    {
+      "id": "no-confirmed-pneumonia",
+      "fields": {
+        "category": "diagnoses",
+        "assertion": "affirmed"
+      }
+    },
+    {
+      "id": "absence-not-resolution",
+      "fields": {
+        "category": "symptoms",
+        "clinical_status": "resolved"
+      }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "case_id": "BMI-01",
+  "split": "development",
+  "review_status": "ai_authored_pending_independent_review",
+  "source_hashes": {
+    "d0": "740847aff09ae8b0b46448467300cd01aef55801c67177b7c2cd994dedd70648"
+  },
+  "expected_findings": [
+    {
+      "kind": "numeric_inconsistency",
+      "status": "accepted",
+      "required_quotes": [
+        {
+          "document_id": "d0",
+          "quote": "Größe: 162 cm"
+        },
+        {
+          "document_id": "d0",
+          "quote": "Gewicht: 73 kg"
+        },
+        {
+          "document_id": "d0",
+          "quote": "BMI: 34"
+        }
+      ]
+    }
+  ],
+  "scope": "Bounded rules only. Candidate means review-needed, never an accepted contradiction. No model extraction accuracy claim."
+}

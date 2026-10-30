@@ -1,0 +1,153 @@
+{
+  "$defs": {
+    "EvidenceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "passage_id": {
+          "title": "Passage Id",
+          "type": "string"
+        },
+        "start": {
+          "description": "Absolute offset in normalized document",
+          "minimum": 0,
+          "title": "Start",
+          "type": "integer"
+        },
+        "end": {
+          "description": "Exclusive absolute offset",
+          "exclusiveMinimum": 0,
+          "title": "End",
+          "type": "integer"
+        },
+        "quote": {
+          "minLength": 1,
+          "title": "Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "passage_id",
+        "start",
+        "end",
+        "quote"
+      ],
+      "title": "EvidenceRef",
+      "type": "object"
+    },
+    "NormalizedEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "fact_id": {
+          "title": "Fact Id",
+          "type": "string"
+        },
+        "original_concept": {
+          "title": "Original Concept",
+          "type": "string"
+        },
+        "canonical_concept": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Canonical Concept"
+        },
+        "concept_rule": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Concept Rule"
+        },
+        "reported_laterality": {
+          "default": "unspecified",
+          "title": "Reported Laterality",
+          "type": "string"
+        },
+        "laterality": {
+          "default": "unspecified",
+          "enum": [
+            "left",
+            "right",
+            "bilateral",
+            "unspecified"
+          ],
+          "title": "Laterality",
+          "type": "string"
+        },
+        "laterality_status": {
+          "enum": [
+            "explicit",
+            "contextual",
+            "ambiguous",
+            "conflict",
+            "unconfirmed",
+            "not_stated"
+          ],
+          "title": "Laterality Status",
+          "type": "string"
+        },
+        "laterality_evidence": {
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "title": "Laterality Evidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "fact_id",
+        "original_concept",
+        "laterality_status"
+      ],
+      "title": "NormalizedEntry",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "normalization_version": {
+      "default": "normalization-v1",
+      "title": "Normalization Version",
+      "type": "string"
+    },
+    "source_evidence_version": {
+      "title": "Source Evidence Version",
+      "type": "string"
+    },
+    "source_bundle_sha256": {
+      "title": "Source Bundle Sha256",
+      "type": "string"
+    },
+    "entries": {
+      "items": {
+        "$ref": "#/$defs/NormalizedEntry"
+      },
+      "title": "Entries",
+      "type": "array"
+    }
+  },
+  "required": [
+    "source_evidence_version",
+    "source_bundle_sha256",
+    "entries"
+  ],
+  "title": "NormalizationIndex",
+  "type": "object"
+}

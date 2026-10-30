@@ -1,0 +1,57 @@
+{
+  "case_id": "DEV-FAMILY-01",
+  "split": "development",
+  "review_status": "ai_authored_pending_independent_review",
+  "provenance": "Independently authored ledger and German prose; no official letters or extractor outputs used. Synthetic drug name.",
+  "source_hashes": {
+    "DEV-FAMILY-01": "606a51498459885f7712efc6b8691c844da792c9c767cb8ce601c6d85d5deba9"
+  },
+  "categories": [
+    "demographics",
+    "encounters",
+    "diagnoses",
+    "symptoms",
+    "allergies",
+    "medications",
+    "vitals",
+    "laboratory",
+    "imaging",
+    "functional_tests",
+    "pathology",
+    "procedures",
+    "care_plans",
+    "followups",
+    "medical_history",
+    "family_history",
+    "social_history",
+    "other_clinical"
+  ],
+  "expected_facts": [
+    {
+      "id": "DEV-FAMILY-01-F1",
+      "fields": {
+        "category": "family_history",
+        "assertion": "affirmed",
+        "subject": "family_member"
+      },
+      "concepts": [],
+      "evidence": [
+        {
+          "document_id": "DEV-FAMILY-01",
+          "start": 18,
+          "end": 51,
+          "quote": "Die Mutter hat Diabetes mellitus."
+        }
+      ]
+    }
+  ],
+  "forbidden_claims": [
+    {
+      "id": "family-not-patient",
+      "fields": {
+        "category": "diagnoses",
+        "subject": "patient"
+      }
+    }
+  ]
+}
