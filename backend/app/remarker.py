@@ -650,8 +650,8 @@ class Remarker:
                     wait_on_quota: bool = True) -> "Remarker":
         """Defaults = the best measured configuration: lexical + embeddings, no reranker.
         The reranker passed the same 18 checks with more noise and 44 extra API calls.
-        wait_on_quota=False builds at once: when the free embedding quota is used up the
-        index starts lexical-only (dense_pending) and is not cached, so a later build completes it."""
+        wait_on_quota=False builds at once: a record without cached embeddings starts lexical-only
+        (dense_pending) and is not cached, so a later build (in the background) completes it."""
         tree = tree or DecisionTree.load()
         configure_for_patient(patient_dir)
         fp = RemarkerIndex.fingerprint(patient_dir, tree, dense, rerank)
@@ -670,7 +670,9 @@ class Remarker:
                     reranker = JinaReranker()
                 except EmbeddingError:
                     reranker = None
-            index = RemarkerIndex.build(patient_dir, tree, embedder, reranker, wait_on_quota=wait_on_quota)
+            # no embedding calls when answering at once: they take seconds to minutes on the free tier
+            index = RemarkerIndex.build(patient_dir, tree, embedder if wait_on_quota else None, reranker,
+                                        wait_on_quota=wait_on_quota)
             if embedder is None or index.seg_vectors is not None:  # never cache an index whose embeddings failed
                 index.save(folder, fp)
         rm = cls(index, tree, embedder)

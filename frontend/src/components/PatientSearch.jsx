@@ -266,6 +266,27 @@ export function PatientSearch({ onFound }) {
           <h1 className="panel-title m-0">{t('findPatientTitle')}</h1>
         </div>
 
+        <div className="login-import">
+          <button type="button" disabled={importing || Boolean(step)} onClick={() => folderInput.current?.click()}>
+            {t('importFolder')}
+          </button>
+          <button type="button" disabled={importing || Boolean(step)} onClick={() => filesInput.current?.click()}>
+            {t('importFiles')}
+          </button>
+          <input ref={folderInput} type="file" hidden webkitdirectory="" onChange={upload} />
+          <input ref={filesInput} type="file" hidden multiple accept=".json,application/json" onChange={upload} />
+        </div>
+        <p className="login-import-note" role="status" title={importNote?.warnings.join(' · ') || undefined}>
+          {importing ? (
+            <>
+              <span className="login-spinner login-spinner--dark" aria-hidden="true" />
+              {t('importing')}
+            </>
+          ) : (
+            importNote?.text ?? t('importHint')
+          )}
+        </p>
+
         {field(
           t('patientName'),
           <input
@@ -318,26 +339,6 @@ export function PatientSearch({ onFound }) {
           )}
         </button>
 
-        <div className="login-import">
-          <button type="button" disabled={importing || Boolean(step)} onClick={() => folderInput.current?.click()}>
-            {t('importFolder')}
-          </button>
-          <button type="button" disabled={importing || Boolean(step)} onClick={() => filesInput.current?.click()}>
-            {t('importFiles')}
-          </button>
-          <input ref={folderInput} type="file" hidden webkitdirectory="" onChange={upload} />
-          <input ref={filesInput} type="file" hidden multiple accept=".json,application/json" onChange={upload} />
-        </div>
-        <p className="login-import-note" role="status" title={importNote?.warnings.join(' · ') || undefined}>
-          {importing ? (
-            <>
-              <span className="login-spinner login-spinner--dark" aria-hidden="true" />
-              {t('importing')}
-            </>
-          ) : (
-            importNote?.text ?? t('importHint')
-          )}
-        </p>
       </form>
     </div>
   );
