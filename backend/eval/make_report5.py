@@ -5,7 +5,17 @@ Usage (from backend/): python -m eval.make_report5
 """
 from __future__ import annotations
 
+import re
+
 from .make_report2 import PAGE, RESULTS, esc, grouped_bars, legend, load, pct, table
+
+_QID = re.compile(r"\d+\.\d+")
+
+
+def qid(q: str) -> str | None:
+    """The judge sometimes repeats the question after its ID ("1.1: Which ..."); keep the ID."""
+    m = _QID.match(str(q).strip())
+    return m.group() if m else None
 
 SYSTEMS = ["ours", "ours_nollm", "llm_only", "rules_only"]
 SLOT = {"ours": 3, "ours_nollm": 1, "llm_only": 2, "rules_only": 4}
@@ -43,7 +53,7 @@ def before_after(runs, by_q, qids) -> str:
         for r in d["rows"]:
             if r["kind"] == "situation":
                 for x in ("ours", "ours_nollm"):
-                    v.update({(q, x): a for q, a in r["systems"][x]["answers"].items()})
+                    v.update({(qid(q), x): a for q, a in r["systems"][x]["answers"].items() if qid(q)})
         verdicts.append(v)
     ms = lambda v: f"{v / 1000:.2f} s"
     num = lambda v: f"{v:,.0f}"
@@ -135,12 +145,14 @@ def build() -> str:
 
     # answers per question
     sit = [r for r in rows if r["kind"] == "situation"]
-    qids = sorted({q for r in sit for x in SYSTEMS for q in r["systems"][x]["answers"]}, key=lambda q: [int(p) for p in q.split(".")])
+    qids = sorted({qid(q) for r in sit for x in SYSTEMS for q in r["systems"][x]["answers"] if qid(q)},
+                  key=lambda q: [int(p) for p in q.split(".")])
     by_q = {}
     for r in sit:
         for x in SYSTEMS:
             for q, v in r["systems"][x]["answers"].items():
-                by_q[(q, x)] = v
+                if qid(q):
+                    by_q[(qid(q), x)] = v
     qrows = [[q] + [VERDICT.get(by_q.get((q, x), ""), "–") for x in SYSTEMS] for q in qids]
     verdict_rows = [(v.capitalize(), [s[x][f"answers_{v}"] / max(s[x]["questions_graded"], 1) for x in SYSTEMS])
                     for v in ("correct", "partial", "missing", "wrong")]

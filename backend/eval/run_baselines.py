@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import re
 import statistics
 import time
 from collections import Counter
@@ -193,7 +194,9 @@ def main(argv=None):
             row["systems"][system] = {
                 "ms": round(sc.ms, 1), "llm_calls": sc.llm_calls, "error": sc.error,
                 **code_metrics(sc, docs), **sent[system],
-                "answers": {a["q"]: a["verdict"] for a in g.get("answers", []) if isinstance(a, dict)},
+                # the judge sometimes repeats the question after its ID ("1.1: Which ..."); keep the ID
+                "answers": {(re.match(r"\d+\.\d+", str(a["q"]).strip()) or [a["q"]])[0]: a["verdict"]
+                            for a in g.get("answers", []) if isinstance(a, dict) and kind == "situation"},
                 "needed": {n["topic"]: n["addressed"] for n in g.get("needed", []) if isinstance(n, dict)},
                 "irrelevant": {n["topic"]: n["shown"] for n in g.get("irrelevant", []) if isinstance(n, dict)},
                 "conflicts": [m.get("match") for m in matches],
